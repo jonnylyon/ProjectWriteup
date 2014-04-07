@@ -5,6 +5,8 @@
 \usepackage{a4wide}
 \usepackage{wrapfig}
 \usepackage{tikz}
+\usepackage{longtable}
+\usepackage{pdflscape}
 
 \usetikzlibrary{arrows,automata}
 
@@ -19,6 +21,8 @@
 \dedication{Dedicating text stuff}
 \acknowledgements{Acknowledging stuff}
 \abstract{Abstract to go here}
+
+\def\rot{\rotatebox}
 
 \begin{document}
 \maketitle 
@@ -39,6 +43,7 @@ Introduction will be going in here.
 \part{Elevator Simulator}
 
 \chapter{Core Elevator Simulator}
+\label{ceschapter}
 
 \textit{The development of the Core Elevator Simulator, as described in this chapter, was done in conjunction with another student, Craig Gosnay, who was working on a similar project to develop scheduling algorithms for elevator groups containing double-decker cars.  The writing in this chapter is exclusively my own.}
 
@@ -463,7 +468,7 @@ Once the user has performed these three steps, the simulator can be recompiled a
 
 \subsection{Passenger Distribution Generator}
 
-The purpose of the Passenger Distribution generator is to load an XML ‘specification’ file, which contains the parameters of the Poisson distributions for the various floors.  Based on this, it outputs a second XML file containing a list of specific passenger groups, with their arrival times, sizes, origins and destinations.  The arrival times of these passenger groups should follow the relevant Poisson distributions as taken from the specification file.  An example specification file is shown below.
+The purpose of the Passenger Distribution generator is to load an XML `specification' file, which contains the parameters of the Poisson distributions for the various floors.  Based on this, it outputs a second XML file containing a list of specific passenger groups, with their arrival times, sizes, origins and destinations.  The arrival times of these passenger groups should follow the relevant Poisson distributions as taken from the specification file.  An example specification file is shown below.
 
 \lstset{language=XML}
 \begin{lstlisting}
@@ -596,7 +601,7 @@ After I had corrected this implementation, I tried the simulation run again and 
 
 \subsection{Scheduler Component}
 
-Since the Scheduler component will be re-implemented for each scheduling algorithm that is run on the simulator, it doesn’t really make sense to completely validate it at this stage.  However, in order to test the general interactions between the Scheduler and the Domain Model component I have used the basic ClosestCar scheduler as described above.  I then used a Manual scheduler, which asks the user to allocate calls to cars, to make the decisions in my head (in the way that I believe the ClosestCar scheduler should allocate them) and ensure that the behaviour of the simulator when using the ClosestCar scheduler matches the behaviour when I make the decisions myself.
+Since the Scheduler component will be re-implemented for each scheduling algorithm that is run on the simulator, it doesn't really make sense to completely validate it at this stage.  However, in order to test the general interactions between the Scheduler and the Domain Model component I have used the basic ClosestCar scheduler as described above.  I then used a Manual scheduler, which asks the user to allocate calls to cars, to make the decisions in my head (in the way that I believe the ClosestCar scheduler should allocate them) and ensure that the behaviour of the simulator when using the ClosestCar scheduler matches the behaviour when I make the decisions myself.
 
 After running the simulation in both scenarios (with the same passenger arrival schedule as used in the domain model component tests), I found that the logs were identical.  Therefore, I am confident that the scheduler component is behaving as it should.  It would not be useful to print the entire log here, but I will print the evaluation results which can be used for later verification if necessary:
 
@@ -612,8 +617,642 @@ Longest time to destination:         66.667
 When the simulator is used with new Scheduling algorithms, care should be taken to ensure that the new Schedulers have been implemented correctly, and tests should be performed to validate the implementations.
 
 \chapter{TCOS Elevator Simulator}
+\label{teschapter}
+
+\section{Introduction}
+
+This chapter describes the portion of the project during which I extended the Core Elevator Simulator to work for the Two Cars in One Shaft (TCOS) case.
+
+\section{Additional Requirements}
+
+\subsection{Specification of Requirements}
+
+The following is a list of additional requirements that had to be met by the TCOS Elevator Simulator.  All of the requirements for the Core Elevator Simulator still applied, but will not be listed again here.  The only exception was that the requirement to be able to simulate systems \textit{without} Destination Control no longer applied, since TCOS systems always use Destination Control.
+
+\subsubsection{Functional Requirements}
+
+	\begin{enumerate}
+		\item To be able to simulate the use, and evaluate the performance, of algorithms designed for the allocation of calls to cars in TCOS elevator systems.  The evaluation objectives must include those specified in the requirements for the Core Elevator Simulator.
+		\item It should be possible to use, in one simulation, traditional elevator shafts (with exactly one car) and TCOS elevator shafts.
+		\item In TCOS shafts, there should be a `garage' floor below the ground floor, in which the lower car can park, leaving the upper car with access to all passenger floors.
+		\item Cars should have an optional `parking' behaviour so that when they become Idle they move to wait at a specific floor rather than just waiting in their current location.
+		\item In TCOS shafts, the lower car should not accept call allocations which include the highest floor.  There is no restriction on which calls the upper car can accept.
+	\end{enumerate}
+
+\subsubsection{Non-Functional Requirements}
+
+	\begin{enumerate}
+	\setcounter{enumi}{5}
+		\item The TCOS extension should avoid changes to the existing code that are so significant as to prevent re-integration with the Core Elevator Simulator line.  This will allow the TCOS simulator to be combined with other extensions made in parallel, making a single general purpose simulator.
+		\item The TCOS extension should be built in such a way that it can be further extended to handle Many Cars in One Shaft (MCOS) cases (i.e. cases where a single shaft might contain 3 or more cars).
+	\end{enumerate}
+
+\subsection{Justification of Requirements}
+
+The above requirements are justified as follows.
+
+Requirement 1 specifies that the same evaluation objectives should be used in the TCOS Elevator Simulator as in the Core Elevator Simulator.  The reason for this is that it allows direct comparisons to be made between the performance of elevator groups containing TCOS shafts and those only containing traditional shafts.  With these comparisons available, inferences could be made about the scenarios in which TCOS systems can provide better performance than traditional systems.
+
+In some scenarios, a building operator might choose to upgrade some subset of their elevator shafts to TCOS, while leaving the remaining shafts operating in the traditional manner.  Requirement 2 allows different such scenarios to be evaluated.
+
+The garage floor in requirement 3 allows the lower car in a TCOS shaft to park out of the way, so that the upper car can visit all floors.  The parking functionality in requirement 4 allows the Scheduler to make use of this floor, as well as having the upper car automatically park at the top floor so as to maximise the floors available to the lower car.
+
+Requirement 5 stops the deadlock situation whereby a call for the top floor is allocated to the lower car, which can never reach the call due to the presence of the upper car.
+
+Requirements 6 and 7 are included to ensure that the TCOS Elevator Simulator can be put to best use by me and others following the end of this project.
+
+\section{Domain Assumptions}
+
+There are a number of assumptions made about the TCOS case in addition those made for the Core Elevator Simulator.
+	\begin{enumerate}
+		\item The separation of cars within a shaft is controlled by ensuring that no two cars may occupy the same floor at the same time.
+		\item When a car is moving from one floor ($a$) to the next ($b$), it is considered to occupy both floors at the same time.  Therefore the other car may not start moving towards floor $a$ until the car has reached floor $b$.
+		\item No further separation is enforced between cars except as specified and implied by the assumptions above.
+		\item No car will stop between floors.
+	\end{enumerate}
+
+\section{High Level Design Decisions}
+
+The TCOS case introduced some complications to the constraints, which mean that decisions had to be made about the control logic in the Domain Model component.  Various strategies were considered in order to avoid deadlock or collision between cars.
+
+\subsection{Option 1: Dynamic `Zoning' Approach}
+
+This approach works by considering each car within a shaft to have an exclusive zone of floors transiently defined as the minimal set of consecutive floors containing (a) the current floor of the car, (b) the car's park floor, and (c) the locations of all calls currently assigned to the car.  When the Scheduler attempts to assign a call to a car, the car must either accept or reject the call based on the following rules:
+	\begin{enumerate}
+		\item If both the origin and destination of the call are within the car's current zone, the call will be accepted.
+		\item Otherwise, if both the origin and destination lie within the range of floors that the car's current zone can be extended into without overlapping with the zone of another car in the same shaft, the call will be accepted and the car's current zone will be extended accordingly.
+		\item Otherwise, the call will be rejected and the Scheduler will have to allocate the call to another car.
+	\end{enumerate}
+
+In this case, the park floors should be fixed as the highest floor (for the upper car) and the garage floor (for the lower car).
+
+This approach very effectively separates the cars and does so without ultimately limiting the range of floors that any car can serve (for example, with appropriate Scheduler behaviour, the upper car could conceivably serve a call at the ground floor, if the lower car is parked at the garage floor).  However, it is inefficient in that it could restrict the allocation of calls that might actually be feasible.  For example, if the upper car is at floor 8, and the lower car is travelling down from floor 4 to floor 1, it might be reasonable to allocate a call at floor 3 to the upper car.  This approach would not allow the allocation.
+
+\subsection{Option 2: Conflict Resolution Approach}
+
+This more complicated approach allows any call to be allocated to any car at any time, and then relies on the control logic to resolve conflicts between cars.  In general, there are two types of conflict: one where the cars are travelling in the same direction but the car in front is delaying the car behind and the other where the cars are both travelling towards each other.  The former of these is simple to resolve from a conceptual perspective – the one behind must wait for the other to move out of the way before proceeding.  The latter presents some issue as one car (a `slave') must reverse for some distance to allow the other one (the `master') to serve its calls.  Some method of determining which car would be given priority would be required in order to use this approach.
+
+While this approach has the potential to solve the efficiency problem of option 1, it also has some problems of its own.  For example, the master-slave behaviour would result in some conflict with the passenger expectation constraints (i.e. that a car must not change direction if it currently has passengers on board).  Additionally, it means that some non-trivial logic which is conceptually part of the Scheduling process is fixed within the Domain Model component.
+
+\subsection{Option 3: Overlapping Dynamic Zoning Approach}
+
+The third option is similar to option 1, but it allows the zones of the two cars to overlap as long as the zone of the upper car does not contain the current floor of the lower car and vice-versa.  In this case, the set of floors that are in the zones of both cars is known as the overlap zone.  Only one of the cars may enter the overlap zone at a time, and this permission is granted to whichever one gets there first.  For example, if the overlap zone is floors 4, 5 and 6, and the lower car attempts to visit floor 4 while the upper car is still at floor 8, the lower car will continue to floor 4 and subsequently floors 5 and 6.  In the meantime, the upper car will be held at floor 7.  When the lower car leaves floor 6 to return to floor 5 the overlap zone will now only contain floors 4 and 5, so the upper car will be allowed to proceed to floor 6, and so on.
+
+The following rules would be used to decide whether or not to accept a hall call:
+\begin{enumerate}
+	\item If both the origin and destination of the call are within the car's current zone, the call will be accepted.
+	\item Otherwise, if the car's current zone contains a floor already occupied by the other car in the shaft, and both the origin and destination of the call are within the other car's zone without being the last floor in its zone, the call will be accepted and the car's current zone will be extended accordingly.
+	\item Otherwise, if both the origin and destination lie within the range of floors that the car's current zone can be extended into without including the current floor of the other car in the same shaft, the call will be accepted and the car's current zone will be extended accordingly.
+	\item Otherwise, the call will be rejected and the Scheduler will have to allocate the call to another car.
+\end{enumerate}
+
+Note that if one car has already entered the overlap zone, the second rule allows the waiting car's zone to expand further past the other car.  This does not cause any problem, so long as the other car's zone always protrudes at least one floor further so as to avoid deadlock occurring later on.
+
+As with option 1, the park floors for the upper and lower cars should be the highest floor and the garage floor respectively.
+
+Option 3 is more efficient than option 1 in that it allows some feasible call allocations that option 1 does not allow.  However, it manages to extend the possibilities without contravening the passenger expectation constraints or the conceptual logic architecture of the simulator.
+
+\subsection{Option 4: Extended Overlapping Dynamic Zoning Approach}
+
+The fourth option considers that a car's zone is the minimal set of floors that contains (a) the current floor of the car, (b) the car's park floor, and (c) all floors that the car will visit before its next reversal.  This is different from the zones defined in options 3 and 4 as it only includes the calls in P1 and, if it is beyond the furthest location of all P1 calls, the first call in P2.
+
+This option extends option 3 to allow one car's zone to `absorb' the current floor of the other car, provided that the other car's zone does not already include this car's current floor (i.e. this car is not inside the overlap zone).  The result of this absorption is that the other car is now inside the overlap zone, and thus this car must wait for the other car to leave before it can enter.
+
+The changes to the zone definition mean that if a car is travelling towards its park floor, none of the floors behind it are included in its zone, meaning that the other car can follow it if it wants to without ending up in the situation where both cars are in the overlap zone.  However, in order to avoid a deadlock situation, if the car is travelling towards its park floor it must continue to do so until it has left the zone of the other car before reversing, so as to allow the other car to attend its calls.
+
+In this option, the rules for accepting and rejecting calls are as follows:
+	\begin{enumerate}
+		\item If the call is a P3 call, the call will be accepted.
+		\item Otherwise, if both the origin and destination of the call are within the car's current zone, the call will be accepted.
+		\item Otherwise, if the car's current floor is not inside the overlap zone, and both the origin and destination of the call are within the other car's zone without being the last floor in its zone, the call will be accepted and the car's current zone will be extended accordingly.
+		\item Otherwise, if the car's current floor is inside the overlap zone, and both the origin and destination lie within the range of floors that the car's current zone can be extended into without including the current floor of the other car in the same shaft, the call will be accepted and the car's current zone will be extended accordingly.
+		\item Otherwise, the call will be rejected and the Scheduler will have to allocate the call to another car.
+	\end{enumerate}
+
+Note that the lower car can never accept a call that requires it to visit the highest floor, and the upper car can never accept a call that requires it to visit the garage floor.  This rule is implicitly satisfied by the rules given above (a car cannot accept a call where either the origin or destination floor is the last floor in the other car's zone).
+
+Again, the park floors for the upper and lower cars should be the highest floor and the garage floor respectively.
+
+This option further builds on the benefits of options 1 and 3, without contravening either the passenger expectation constraints or the conceptual logic architecture of the simulator.  For this reason, I chose to use option 4 in the TCOS Elevator Simulator.
+
+\section{Detailed Description of Changes Made}
+
+In this section I will describe the changes that were necessary in order to extend the Core Elevator Simulator for the TCOS case.  The majority of the changes were to the Domain Model component, though minor changes were also necessary in the Scheduler and Simulation Configuration components.
+
+\subsection{Domain Model Component}
+
+There was a large amount of logic that needed to be added to the Domain Model in the TCOS Elevator Simulator.  In order to maintain the generality of the simulator (so that it could still be used for simulations including traditional elevator shafts as well as TCOS shafts) a new TCOSCar class was added, and the traditional Car class was left largely unchanged.  The Core Elevator Simulator had been designed such that the traditional Car class implemented an interface, ICar, and all interactions with the Car were via the ICar interface.  This meant that the TCOSCar class simply needed to interface the ICar interface in order to be compatible with the rest of the program.
+
+Since the Extended Overlapping Zoning Approach (option 4, discussed above) requires that a TCOS car can reject call allocations, it was necessary to modify the ICar interface slightly so that the allocateHallCall method, called by Schedulers to allocate a call to a car, returned a Boolean value indicating the success (true) or failure (false) of the allocation.  The traditional Car class had to be modified accordingly, simply returning true (for success) in all cases.
+
+Aside from the minor `housekeeping' changes described above, the following three methods were added in the TCOS implementation, corresponding to certain aspects of logic in option 4:
+	\begin{description}
+		\item[CanAcceptHallCall] Based on the rules described in option 4, this method works out whether or not a call can be accepted at the current time, based on the circumstances of both cars in the shaft and the calls currently allocated to them.
+		\item[CanMoveToNextFloor] This method works out whether or not the car is permitted to move forward to the next floor.  This is necessary because a car cannot enter the overlap zone while the other car is within it.
+		\item[MustContinueInCurrentDirection] This method works out whether or not the car must continue forward in order to allow the other car to visit its calls, even if this car needs to reverse before it can serve its own calls.  As described in option 4, if the car is in the overlap zone and travelling back towards its park floor it must continue forward until it has left the overlap zone, so as to avoid causing a deadlock situation.
+	\end{description}
+	
+All of these three methods require knowledge of the current zones applicable to the two cars in the shaft.  Therefore, a CurrentZone property was added in the TCOSCar class, which calculates and returns a list of all floors in the current zone according the definition described in option 4.  Additionally, a CurrentFloorsOccupied property was added in the TCOSCar class, which returns a list of up to 2 floors that the car is currently occupying.  If a car is stopped at floor 4, this list only contains the value 4, while if it is moving from floor 4 to floor 5, the list contains both 4 and 5 until it arrives at floor 5 when it will contain just 5.
+
+A new action was added to the CarAction options, named `Waiting', which a TCOS car uses when it is stationary waiting for the other car to perform tasks before it can move.  When one car in the shaft moves, it notifies the other car so that the other car can, if appropriate, re-assess the situation and decide whether or not to continue waiting.  The waiting car will begin moving again once the other car has started moving back towards its park floor.
+
+It was also necessary to change the behaviour of the cars so that, instead of simply stopping in situ and changing its action to Idle when there are no calls to serve, the car would move to its designated park floor at this stage before entering changing to a new action, named `Parked'.
+
+\subsection{Scheduler Component}
+
+The only change necessary in the Scheduler component related to the fact that a car can now reject hall call allocations, with the allocation method returning true or false to indicate whether or not the allocation was accepted.  Therefore, Schedulers must be aware of the potential for an allocation to fail and, if appropriate, implement code to handle an allocation failure and attempt allocation to another car.
+
+\subsection{Simulation Configuration}
+
+The first change necessary in the Simulation Configuration component was to allow simulation configuration files to specify the park floor of each car.  This was implemented by adding a ‘parkFloor’ attribute to the `Car' tag in the XML config files, the value of which is passed to the corresponding car at the start of the simulation.
+
+The second change was to add `TCOS' as an option for the car type, so that the user could select to use TCOS cars in the simulation.
+
+\section{Validation}
+
+\subsection{Domain Model Component}
+As with the Core Elevator Simulator, the most significant validation required in the TCOS Elevator Simulator is in the Domain Model component.  Again, since each car only interacts with the other car in its shaft, it was appropriate to focus the testing on the behaviour of cars within a single shaft.  This time, I used a building consisting of 10 floors, numbered 0 to 9, as well as a garage floor below floor 0 (numbered -1) which could not be used by passengers.  The passenger arrival schedule contained 9 passenger groups, totalling 39 people, arriving over the course of 2\textonehalf minutes.  I built a scheduler named TwoZonesScheduler which would allocate each hall call to either the upper or lower car depending on the origin and destination floors of the passenger group involved (if the average of the origin and destination was greater than or equal to 4.5 the scheduler would first attempt to allocate it to the upper car, otherwise it would first attempt to allocate it to the lower car).  If the first allocation attempt failed, it would allocate it to the other car instead.
+
+Again, I used Microsoft Excel to maintain a trace table of the behaviour of both cars in the shaft, performing all calculations by hand.  I calculated that the full simulation run would take a total of 4 minutes and 54 seconds, and kept a record of the boarding and alighting times of each passenger group.  The full trace table, including every state change that took place, is shown in the appendix.
+
+The passenger arrival schedule was designed to invoke all of the code path scenarios available, specifically testing the following cases:
+	\begin{itemize}
+		\item A car stops to pick up passengers that cannot be accommodated due to lack of available space.  In this scenario the car was to revisit and attempt to pick up the passengers later on, and it was important that the zoning approach could handle this change of circumstances appropriately.
+		\item A car is closing its doors when it receives a new call to be served from this floor in this direction.  The car was to reopen its doors and allow the new passengers on.
+		\item A car receives a call requiring it to stop at the next floor, while it is currently moving towards that floor.  Provided there is still time to stop, the car is to make an unexpected stop to pick up the passengers.
+		\item A car wishes to enter the overlap zone when the other car already occupies the zone.  The car must wait for the other car to turn back before it can continue.
+		\item A car has finished serving all calls in P1 and needs to reverse in order to serve P2 calls.  However, the other car has entered the overlap zone and needs to come to the floor that this car currently occupies.  This car must first continue away from its calls so that the other car can serve its calls, so as to avoid a deadlock scenario.
+		\item A car has finished serving all calls in P1, P2 and P3.  It must return to its park floor and wait for further calls to be allocated.
+		\item A car is inside the overlap zone when the scheduler attempts to allocate a P1 call that would require the car to visit the floor at which the other car is currently waiting.  Since this would result in a deadlock scenario, the car must reject the call.
+	\end{itemize}
+
+When I first ran the TCOS Elevator Simulator configured as described above, the two cars in the shaft entered a deadlock scenario.  This meant that either there was a problem with the logic decided upon in option 4 (extended overlapping dynamic zoning) or that it had been incorrectly implemented in the code.  I placed a breakpoint in the code to be activated just before the deadlock scenario occurred so that I could examine the implementation and determine the cause of the problem.  It turned out that the implementation of the logic in the MustContinueInCurrentDirection method was flawed in that it only considered the floor of the other car's state, even if the other car had been authorised to proceed to the next floor and was moving towards it.  I changed the code to use the CurrentFloorsOccupied property of TCOSCar which includes the floor towards which a car has started moving.
+
+After I had corrected this aspect of the code, I ran the simulation again and found that everything behaved as expected.  The car state changes happened at the right times (within the 10-millisecond accuracy to which I had performed my calculations), and all passenger boarding and arrival times were as expected, as well as the success and failure of call allocations.  I am now confident that my changes to the Domain Model in the TCOS Elevator Simulator are valid.  \ref{tcosvalidationgraph} is an Excel-generated graph which shows the movement of the upper (pink) and lower (blue) cars with time, demonstrating the minimum distance maintained between the two cars.
+
+\begin{figure} [h]
+	\centering
+	\includegraphics{tcos_validation_movement_graph.png}
+	\caption{The movement of the two cars during the validating simulation run}
+	\label{tcosvalidationgraph}
+\end{figure}
+
+\subsection{Scheduler Component}
+
+The only change to the Scheduler component was for Schedulers to handle call allocation failures from Cars.  This was implicitly tested during the Domain Model tests described above and performed correctly.  However, it is still necessary that each new Scheduler that is implemented should be properly validated as discussed in the Core Elevator Simulator part.
 
 \part{Algorithms for TCOS Elevator Systems}
 
 \bibliography{project}
+
+\appendix
+\part{Appendices}
+
+\chapter{Materials referred to in Chapter \ref{ceschapter}}
+
+\section{XML Materials}
+
+\subsection{Sample Passenger Arrival Schedule file}
+
+\lstset{language=XML}
+\begin{lstlisting}
+<PassengerGroups>
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:02" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:11" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:20" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:28" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:31" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:34" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:48" Size="2" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:50" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:52" Size="3" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:00:59" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:01:12" Size="1" Origin="2" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:01:15" Size="4" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:01:51" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:01:52" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:02:31" Size="3" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:02:54" Size="2" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:05" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:12" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:16" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:19" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:27" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:30" Size="2" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:32" Size="2" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:36" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:37" Size="2" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:43" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:48" Size="2" Origin="1" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:52" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:03:58" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:04:02" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:04:11" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:04:38" Size="1" Origin="2" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:04:42" Size="4" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:04:45" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:01" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:06" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:12" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:12" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:19" Size="4" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:23" Size="1" Origin="1" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:27" Size="3" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:30" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:36" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:40" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:49" Size="3" Origin="1" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:50" Size="1" Origin="2" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:05:56" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:06" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:06" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:12" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:12" Size="3" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:27" Size="2" Origin="2" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:29" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:32" Size="4" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:46" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:55" Size="4" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:06:58" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:01" Size="2" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:03" Size="2" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:06" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:09" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:15" Size="4" Origin="2" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:16" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:30" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:07:41" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:05" Size="2" Origin="2" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:06" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:09" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:12" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:13" Size="1" Origin="2" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:17" Size="1" Origin="2" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:24" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:30" Size="2" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:32" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:37" Size="1" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:38" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:40" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:08:46" Size="3" Origin="1" Destination="0" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:05" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:09" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:14" Size="5" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:23" Size="3" Origin="1" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:24" Size="1" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:37" Size="1" Origin="0" Destination="2" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:39" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:49" Size="3" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:51" Size="2" Origin="0" Destination="1" />
+	<PassengerGroup ArrivalTime="03/03/2014 13:09:51" Size="1" Origin="1" Destination="2" />
+</PassengerGroups>
+\end{lstlisting}
+
+\subsection{Sample Simulation Configuration file}
+
+\begin{lstlisting}
+<SimulationConfig>
+	<Scheduler>ClosestCar</Scheduler>
+	
+	<PassengerDistribution source="load">
+		<SpecificationFile>spec/3 floor up peak sample.xml</SpecificationFile>
+		<MaxGroupSize>20</MaxGroupSize>
+		<DistributionFile>dist/3 floor up peak sample.xml</DistributionFile>
+		<StartTime>13:00</StartTime>
+		<EndTime>13:10</EndTime>
+		<Resolution>1000</Resolution>
+	</PassengerDistribution>
+	
+	<CarAttributes name="Standard">
+		<Capacity>20</Capacity>
+		<MaxSpeed>5</MaxSpeed>
+		<Acceleration>3</Acceleration>
+		<Deceleration>3</Deceleration>
+		<DoorsOpenTime>2</DoorsOpenTime>
+		<DoorsCloseTime>2</DoorsCloseTime>
+		<DirectionChangeTime>1</DirectionChangeTime>
+		<PassengerBoardTime>2</PassengerBoardTime>
+		<PassengerAlightTime>2</PassengerAlightTime>
+	</CarAttributes>
+	
+	<Building minFloor="0" maxFloor="3" interfloorDistance="5">
+		<Shaft>
+			<Car type="Single" attributes="Standard" startFloor="0" />
+		</Shaft>
+		<Shaft>
+			<Car type="Single" attributes="Standard" startFloor="1" />
+		</Shaft>
+		<Shaft>
+			<Car type="Single" attributes="Standard" startFloor="2" />
+		</Shaft>
+	</Building>
+	
+	<LogFile>auto</LogFile>
+</SimulationConfig>
+\end{lstlisting}
+
+\section{Validation Materials}
+
+\subsection{Passenger Arrival Schedule}
+
+This is the passenger arrival schedule that was designed for testing the domain model component.
+
+\begin{tabular}{l | l | l | l | l}
+	Group ID & Arrival Time & Size of Group & Origin Floor & Destination Floor \\
+	\hline
+	1 & 13:00:08 & 2 & 1 & 2 \\
+	2 & 13:00:09 & 1 & 0 & 1 \\
+	3 & 13:00:12 & 3 & 2 & 0 \\
+	4 & 13:00:17 & 1 & 0 & 2 \\
+	5 & 13:00:40 & 1 & 0 & 2 \\
+	6 & 13:01:00 & 1 & 2 & 1 \\
+	7 & 13:01:13 & 2 & 2 & 1 \\
+	8 & 13:01:22 & 19 & 2 & 0 \\
+	9 & 13:01:46 & 1 & 1 & 2 \\
+	10 & 13:01:47 & 1 & 1 & 2 \\
+	11 & 13:01:49 & 2 & 0 & 2 \\
+	12 & 13:01:56 & 4 & 2 & 0 \\
+	13 & 13:02:27 & 1 & 1 & 0 \\	
+\end{tabular}
+
+\subsection{Trace Table}
+
+This is the manually-produced trace table that was used to verify the behaviour of a single car domain model when executing on the passenger arrival schedule above.  States with the Stopped car action are omitted since including them adds no value.
+
+\begin{longtable}{l | l | l | l | l | l | l}
+	Group ID & Car Action & Car Direction & Floor & Speed & Current Groups & Total Passengers \\
+	\hline
+	13:00:00.00 & Idle & Up & 0 & 0 &  & 0 \\
+	13:00:08.00 & DoorsClosing & Up & 0 & 0 &  & 0 \\
+	13:00:10.00 & DoorsOpening & Up & 0 & 0 &  & 0 \\
+	13:00:12.00 & Loading & Up & 0 & 0 &  & 0 \\
+	13:00:14.00 & DoorsClosing & Up & 0 & 0 & 2 & 1 \\
+	13:00:16.00 & Leaving & Up & 0 & 0 & 2 & 1 \\
+	13:00:17.29 & Stopping & Up & 1 & 3.87 & 2 & 1 \\
+	13:00:18.58 & DoorsOpening & Up & 1 & 0 & 2 & 1 \\
+	13:00:20.58 & Unloading & Up & 1 & 0 & 2 & 1 \\
+	13:00:22.58 & Loading & Up & 1 & 0 &  & 0 \\
+	13:00:26.58 & DoorsClosing & Up & 1 & 0 & 1 & 2 \\
+	13:00:28.58 & Leaving & Up & 1 & 0 & 1 & 2 \\
+	13:00:29.87 & Stopping & Up & 2 & 3.87 & 1 & 2 \\
+	13:00:31.16 & DoorsOpening & Up & 2 & 0 & 1 & 2 \\
+	13:00:33.16 & Unloading & Up & 2 & 0 & 1 & 2 \\
+	13:00:37.16 & Reversing & Up & 2 & 0 &  & 0 \\
+	13:00:38.16 & Loading & Down & 2 & 0 &  & 0 \\
+	13:00:44.16 & DoorsClosing & Down & 2 & 0 & 3 & 3 \\
+	13:00:46.16 & Leaving & Down & 2 & 0 & 3 & 3 \\
+	13:00:47.45 & Moving & Down & 1 & 3.87 & 3 & 3 \\
+	13:00:48.16 & Stopping & Down & 0 & 5 & 3 & 3 \\
+	13:00:49.83 & DoorsOpening & Down & 0 & 0 & 3 & 3 \\
+	13:00:51.83 & Unloading & Down & 0 & 0 & 3 & 3 \\
+	13:00:57.83 & Reversing & Down & 0 & 0 &  & 0 \\
+	13:00:58.83 & Loading & Up & 0 & 0 &  & 0 \\
+	13:01:02.83 & DoorsClosing & Up & 0 & 0 & 4,5 & 2 \\
+	13:01:04.83 & Leaving & Up & 0 & 0 & 4,5 & 2 \\
+	13:01:06.12 & Moving & Up & 1 & 3.87 & 4,5 & 2 \\
+	13:01:06:83 & Stopping & Up & 2 & 5 & 4,5 & 2 \\
+	13:01:08.50 & DoorsOpening & Up & 2 & 0 & 4,5 & 2 \\
+	13:01:10.50 & Unloading & Up & 2 & 0 & 4,5 & 2 \\
+	13:01:14.50 & Reversing & Up & 2 & 0 &  & 0 \\
+	13:01:15.50 & Loading & Down & 2 & 0 &  & 0 \\
+	13:01:21.50 & DoorsClosing & Down & 2 & 0 & 6,7 & 3 \\
+	13:01:23.50 & DoorsOpening & Down & 2 & 0 & 6,7 & 3 \\
+	13:01:25.50 & DoorsClosing & Down & 2 & 0 & 6,7 & 3 \\
+	13:01:27.50 & Leaving & Down & 2 & 0 & 6,7 & 3 \\
+	13:01:28.79 & Stopping & Down & 1 & 3.87 & 6,7 & 3 \\
+	13:01:30:08 & DoorsOpening & Down & 1 & 0 & 6,7 & 3 \\
+	13:01:32.08 & Unloading & Down & 1 & 0 & 6,7 & 3 \\
+	13:01:38.08 & Reversing & Down & 1 & 0 &  & 0 \\
+	13:01:39.08 & DoorsClosing & Up & 1 & 0 &  & 0 \\
+	13:01:41.08 & Leaving & Up & 1 & 0 &  & 0 \\
+	13:01:42.37 & Stopping & Up & 2 & 3.87 &  & 0 \\
+	13:01:43.66 & DoorsOpening & Up & 2 & 0 &  & 0 \\
+	13:01:45.66 & Reversing & Up & 2 & 0 &  & 0 \\
+	13:01:46.66 & Loading & Down & 2 & 0 &  & 0 \\
+	13:02:24.66 & DoorsClosing & Down & 2 & 0 & 8 & 19 \\
+	13:02:26.66 & Leaving & Down & 2 & 0 & 8 & 19 \\
+	13:02:27.95 & Stopping & Down & 1 & 3.87 & 8 & 19 \\
+	13:02:29.24 & DoorsOpening & Down & 1 & 0 & 8 & 19 \\
+	13:02:31.24 & Loading & Down & 1 & 0 & 8 & 19 \\
+	13:02:33.24 & DoorsClosing & Down & 1 & 0 & 8,13 & 20 \\
+	13:02:35.24 & Leaving & Down & 1 & 0 & 8,13 & 20 \\
+	13:02:36.53 & Stopping & Down & 0 & 3.87 & 8,13 & 20 \\
+	13:02:37.82 & DoorsOpening & Down & 0 & 0 & 8,13 & 20 \\
+	13:02:39.82 & Unloading & Down & 0 & 0 & 8,13 & 20 \\
+	13:03:19.82 & Reversing & Down & 0 & 0 &  & 0 \\
+	13:03:20.82 & Loading & Up & 0 & 0 &  & 0 \\
+	13:03:24.82 & DoorsClosing & Up & 0 & 0 & 11 & 2 \\
+	13:03:26.82 & Leaving & Up & 0 & 0 & 11 & 2 \\
+	13:03:28.11 & Stopping & Up & 1 & 3.87 & 11 & 2 \\
+	13:03:29.40 & DoorsOpening & Up & 1 & 0 & 11 & 2 \\
+	13:03:31.40 & Loading & Up & 1 & 0 & 11 & 2 \\
+	13:03:35.40 & DoorsClosing & Up & 1 & 0 & 9,10,11 & 4 \\
+	13:03:37.40 & Leaving & Up & 1 & 0 & 9,10,11 & 4 \\
+	13:03:38.69 & Stopping & Up & 2 & 3.87 & 9,10,11 & 4 \\
+	13:03:39.98 & DoorsOpening & Up & 2 & 0 & 9,10,11 & 4 \\
+	13:03:41.98 & Unloading & Up & 2 & 0 & 9,10,11 & 4 \\
+	13:03:49.98 & Reversing & Up & 2 & 0 &  & 0 \\
+	13:03:50.98 & Loading & Down & 2 & 0 &  & 0 \\
+	13:03:58.98 & DoorsClosing & Down & 2 & 0 & 12 & 4 \\
+	13:04:00.98 & Leaving & Down & 2 & 0 & 12 & 4 \\
+	13:04:02.27 & Moving & Down & 1 & 3.87 & 12 & 4 \\
+	13:04:02.98 & Stopping & Down & 0 & 5 & 12 & 4 \\
+	13:04:04.65 & DoorsOpening & Down & 0 & 0 & 12 & 4 \\
+	13:04:06.65 & Unloading & Down & 0 & 0 & 12 & 4 \\
+	13:04:14.65 & Idle & Down & 0 & 0 &  & 0
+\end{longtable}
+
+\chapter{Materials referred to in Chapter \ref{teschapter}}
+
+\section{Validation Materials}
+
+\subsection{Passenger Arrival Schedule}
+
+This is the passenger arrival schedule that was designed for testing the Domain Model component of the TCOS Elevator Simulator.
+
+\begin{tabular}{l | l | l | l | l}
+	Group ID & Arrival Time & Size of Group & Origin Floor & Destination Floor \\
+	\hline
+	1 & 13:00:03 & 2 & 7 & 5 \\
+	2 & 13:00:12 & 3 & 0 & 8 \\
+	3 & 13:00:18 & 1 & 7 & 6 \\
+	4 & 13:00:28 & 4 & 5 & 7 \\
+	5 & 13:01:40 & 7 & 9 & 2 \\
+	6 & 13:02:00 & 18 & 8 & 5 \\
+	7 & 13:02:04 & 2 & 2 & 3 \\
+	8 & 13:02:17 & 1 & 3 & 4 \\
+	9 & 13:02:29 & 1 & 3 & 0
+\end{tabular}
+
+\begin{landscape}
+
+\subsection{Trace Table}
+
+This is the manually-produced trace table that was used to verify the behaviour of two TCOS cars in a single shaft when executing on the passenger arrival schedule above.  States with the Stopped car action are omitted since including them adds no value.
+
+\begin{longtable}{l || l | l | l | l | l | l | l | l || l | l | l | l | l | l | l | l}
+	& \multicolumn{8}{c||}{Lower Car} & \multicolumn{8}{c}{Upper Car} \\
+	& & & & & & \multicolumn{2}{c|}{Groups} & & & & & & \multicolumn{2}{c|}{Groups} & \\
+	Time & \rot{90}{Car Action} & \rot{90}{Direction} & \rot{90}{Floor} & \rot{90}{Zone} & \rot{90}{Speed} & \rot{90}{On board} & \rot{90}{Waiting} & \rot{90}{Total On Board} & \rot{90}{Car Action} & \rot{90}{Direction} & \rot{90}{Floor} & \rot{90}{Zone} & \rot{90}{Speed} & \rot{90}{On board} & \rot{90}{Waiting} & \rot{90}{Total On Board} \\
+	\hline
+	13:00:00.00 & Parked & Up & -1 & -1,-1 & 0 &  &  & 0 & Parked & Up & 9 & 9,9 & 0 &  &  & 0 \\
+	13:00:03.00 &  &  &  &  &  &  &  &  & Reversing & Up & 9 & 9,9 & 0 &  & 1 & 0 \\
+	13:00:04.00 &  &  &  &  &  &  &  &  & DoorsClosing & Down & 9 & 5,9 & 0 &  & 1 & 0 \\
+	13:00:06.00 &  &  &  &  &  &  &  &  & Leaving & Down & 9 & 5,9 & 0 &  & 1 & 0 \\
+	13:00:07.29 &  &  &  &  &  &  &  &  & Moving & Down & 8 & 5,9 & 3.87 &  & 1 & 0 \\
+	13:00:08.00 &  &  &  &  &  &  &  &  & Stopping & Down & 7 & 5,9 & 5 &  & 1 & 0 \\
+	13:00:09.67 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 7 & 5,9 & 0 &  & 1 & 0 \\
+	13:00:11.67 &  &  &  &  &  &  &  &  & Loading & Down & 7 & 5,9 & 0 &  & 1 & 0 \\
+	13:00:12.00 & DoorsClosing & Up & -1 & -1,8 & 0 &  & 2 & 0 &  &  &  &  &  &  &  &  \\
+	13:00:14.00 & Leaving & Up & -1 & -1,8 & 0 &  & 2 & 0 &  &  &  &  &  &  &  &  \\
+	13:00:15.29 & Stopping & Up & 0 & -1,8 & 3.87 &  & 2 & 0 &  &  &  &  &  &  &  &  \\
+	13:00:15.67 &  &  &  &  &  &  &  &  & DoorsClosing & Down & 7 & 5,9 & 0 & 1 &  & 2 \\
+	13:00:16.58 & DoorsOpening & Up & 0 & -1,8 & 0 &  & 2 & 0 &  &  &  &  &  &  &  &  \\
+	13:00:17.67 &  &  &  &  &  &  &  &  & Leaving & Down & 7 & 5,9 & 0 & 1 &  & 2 \\
+	13:00:18.58 & Loading & Up & 0 & -1,8 & 0 &  & 2 & 0 &  &  &  &  &  &  &  &  \\
+	13:00:18.96 &  &  &  &  &  &  &  &  & Moving & Down & 6 & 5,9 & 3.87 & 1 & 3 & 2 \\
+	13:00:19.67 &  &  &  &  &  &  &  &  & Stopping & Down & 5 & 5,9 & 5 & 1 & 3 & 2 \\
+	13:00:21.34 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 5 & 5,9 & 0 & 1 & 3 & 2 \\
+	13:00:23.34 &  &  &  &  &  &  &  &  & Unloading & Down & 5 & 5,9 & 0 & 1 & 3 & 2 \\
+	13:00:24.58 & DoorsClosing & Up & 0 & -1,8 & 0 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:26.58 & Leaving & Up & 0 & -1,8 & 0 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:27.34 &  &  &  &  &  &  &  &  & Reversing & Down & 5 & 5,9 & 0 &  & 3 & 0 \\
+	13:00:27.87 & Moving & Up & 1 & -1,8 & 3.87 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:28.34 &  &  &  &  &  &  &  &  & Loading & Up & 5 & 5,9 & 0 &  & 3,4 & 0 \\
+	13:00:28.58 & Moving & Up & 2 & -1,8 & 5 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:29.58 & Moving & Up & 3 & -1,8 & 5 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:30.58 & Stopping & Up & 4 & -1,8 & 5 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:32.25 & Waiting & Up & 4 & -1,8 & 0 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:36.34 &  &  &  &  &  &  &  &  & DoorsClosing & Up & 5 & 5,9 & 0 & 4 & 3 & 4 \\
+	13:00:38.34 &  &  &  &  &  &  &  &  & Leaving & Up & 5 & 5,9 & 0 & 4 & 3 & 4 \\
+	13:00:39.63 & Leaving & Up & 4 & -1,8 & 0 & 2 &  & 3 & Moving & Up & 6 & 6,9 & 3.87 & 4 & 3 & 4 \\
+	13:00:40.34 &  &  &  &  &  &  &  &  & Stopping & Up & 7 & 7,9 & 5 & 4 & 3 & 4 \\
+	13:00:40.92 & Moving & Up & 5 & -1,8 & 3.87 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:41.63 & Stopping & Up & 6 & -1,8 & 5 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:42.01 &  &  &  &  &  &  &  &  & DoorsOpening & Up & 7 & 7,9 & 0 & 4 & 3 & 4 \\
+	13:00:43.30 & Waiting & Up & 6 & -1,8 & 0 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:44.01 &  &  &  &  &  &  &  &  & Unloading & Up & 7 & 7,9 & 0 & 4 & 3 & 4 \\
+	13:00:52.01 &  &  &  &  &  &  &  &  & DoorsClosing & Up & 7 & 7,9 & 0 &  & 3 & 0 \\
+	13:00:54.01 &  &  &  &  &  &  &  &  & Leaving & Up & 7 & 7,9 & 0 &  & 3 & 0 \\
+	13:00:55.30 & Leaving & Up & 6 & -1,8 & 0 & 2 &  & 3 & Moving & Up & 8 & 8,9 & 0 &  & 3 & 0 \\
+	13:00:56.01 &  &  &  &  &  &  &  &  & Stopping & Up & 9 & 9,9 & 0 &  & 3 & 0 \\
+	13:00:56.59 & Moving & Up & 7 & -1,8 & 3.87 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:57.30 & Stopping & Up & 8 & -1,8 & 5 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:00:57.68 &  &  &  &  &  &  &  &  & Reversing & Up & 9 & 9,9 & 0 &  & 3 & 0 \\
+	13:00:58.97 & DoorsOpening & Up &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+	13:00:59.68 &  &  &  &  &  &  &  &  & Waiting & Down & 9 & 6,9 & 0 &  & 3 & 0 \\
+	13:01:00.97 & Unloading & Up & 8 & -1,8 & 0 & 2 &  & 3 &  &  &  &  &  &  &  &  \\
+	13:01:06.97 & Reversing & Up & 8 & -1,8 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:07.97 & DoorsClosing & Down & 8 & -1,8 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:09.97 & Leaving & Down & 8 & -1,8 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:11.26 & Moving & Down & 7 & -1,7 & 3.87 &  &  & 0 & Leaving & Down & 9 & 6,9 & 0 &  & 3 & 0 \\
+	13:01:11.97 & Moving & Down & 6 & -1,6 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:12.55 &  &  &  &  &  &  &  &  & Moving & Down & 8 & 6,9 & 3.87 &  & 3 & 0 \\
+	13:01:12.97 & Moving & Down & 5 & -1,5 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:13.26 &  &  &  &  &  &  &  &  & Stopping & Down & 7 & 6,9 & 5 &  & 3 & 0 \\
+	13:01:13.97 & Moving & Down & 4 & -1,4 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:14.93 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 7 & 6,9 & 0 &  & 3 & 0 \\
+	13:01:14.97 & Moving & Down & 3 & -1,3 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:15.97 & Moving & Down & 2 & -1,2 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:16.93 &  &  &  &  &  &  &  &  & Loading & Down & 7 & 6,9 & 0 &  & 3 & 0 \\
+	13:01:16.97 & Moving & Down & 1 & -1,1 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:17.97 & Moving & Down & 0 & -1,0 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:18.93 &  &  &  &  &  &  &  &  & DoorsClosing & Down & 7 & 6,9 & 0 & 3 &  & 1 \\
+	13:01:18.97 & Stopping & Down & -1 & -1,-1 & 5 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:20.64 & Parked & Down & -1 & -1,-1 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:01:20.93 &  &  &  &  &  &  &  &  & Leaving & Down & 7 & 6,9 & 0 & 3 &  & 1 \\
+	13:01:22.22 &  &  &  &  &  &  &  &  & Stopping & Down & 6 & 6,9 & 3.87 & 3 &  & 1 \\
+	13:01:23.51 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 6 & 6,9 & 0 & 3 &  & 1 \\
+	13:01:25.51 &  &  &  &  &  &  &  &  & Unloading & Down & 6 & 6,9 & 0 & 3 &  & 1 \\
+	13:01:27.51 &  &  &  &  &  &  &  &  & Reversing & Down & 6 & 6,9 & 0 &  &  & 0 \\
+	13:01:28.51 &  &  &  &  &  &  &  &  & DoorsClosing &  &  &  &  &  &  &  \\
+	13:01:30.51 &  &  &  &  &  &  &  &  & Leaving & Up & 6 & 6,9 & 0 &  &  & 0 \\
+	13:01:31.80 &  &  &  &  &  &  &  &  & Moving & Up & 7 & 7,9 & 3.87 &  &  & 0 \\
+	13:01:32.51 &  &  &  &  &  &  &  &  & Moving & Up & 8 & 8,9 & 5 &  &  & 0 \\
+	13:01:33.51 &  &  &  &  &  &  &  &  & Stopping & Up & 9 & 9,9 & 5 &  &  & 0 \\
+	13:01:35.18 &  &  &  &  &  &  &  &  & Parked & Up & 9 & 9,9 & 0 &  &  & 0 \\
+	13:01:40.00 &  &  &  &  &  &  &  &  & Reversing & Up & 9 & 9,9 & 0 &  & 5 & 0 \\
+	13:01:41.00 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 9 & 2,9 & 0 &  & 5 & 0 \\
+	13:01:43.00 &  &  &  &  &  &  &  &  & Loading & Down & 9 & 2,9 & 0 &  & 5 & 0 \\
+	13:01:57.00 &  &  &  &  &  &  &  &  & DoorsClosing &  &  &  &  &  &  &  \\
+	13:01:59.00 &  &  &  &  &  &  &  &  & Leaving & Down & 9 & 2,9 & 0 & 5 &  & 7 \\
+	13:02:00.29 &  &  &  &  &  &  &  &  & Stopping & Down & 8 & 2,9 & 3.87 & 5 & 6 & 7 \\
+	13:02:01.58 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 8 & 2,9 & 0 & 5 & 6 & 7 \\
+	13:02:03.58 &  &  &  &  &  &  &  &  & DoorsClosing & Down & 8 & 2,9 & 0 & 5 & 6 & 7 \\
+	13:02:04.00 & Reversing & Down & -1 & -1,-1 & 0 &  & 7 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:05.58 &  &  &  &  &  &  &  &  & Leaving & Down & 8 & 2,9 & 0 & 5 & 6 & 7 \\
+	13:02:05.00 & Leaving & Up & -1 & -1,3 & 0 &  & 7 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:06.87 &  &  &  &  &  &  &  &  & Moving & Down & 7 & 2,9 & 3.87 & 5 & 6 & 7 \\
+	13:02:06.29 & Moving & Up & 0 & -1,3 & 3.87 &  & 7 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:07.58 &  &  &  &  &  &  &  &  & Moving & Down & 6 & 2,9 & 5 & 5 & 6 & 7 \\
+	13:02:07.00 & Moving & Up & 1 & -1,3 & 5 &  & 7 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:08.58 &  &  &  &  &  &  &  &  & Moving & Down & 5 & 2,9 & 5 & 5 & 6 & 7 \\
+	13:02:08.00 & Stopping & Up & 2 & -1,3 & 5 &  & 7 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:09.58 &  &  &  &  &  &  &  &  & Stopping & Down & 4 & 2,9 & 5 & 5 & 6 & 7 \\
+	13:02:09.67 & DoorsOpening & Up & 2 & -1,3 & 0 &  & 7 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:11.25 &  &  &  &  &  &  &  &  & Waiting & Down & 4 & 2,9 & 0 & 5 & 6 & 7 \\
+	13:02:11.67 & Loading & Up & 2 & -1,3 & 0 &  & 7 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:15.67 & DoorsClosing & Up & 2 & -1,3 & 0 & 7 &  & 2 &  &  &  &  &  &  &  &  \\
+	13:02:17.67 & Leaving & Up & 2 & -1,3 & 0 & 7 &  & 2 &  &  &  &  &  &  &  &  \\
+	13:02:18.96 & Stopping & Up & 3 & -1,3 & 3.87 & 7 &  & 2 &  &  &  &  &  &  &  &  \\
+	13:02:20.25 & DoorsOpening & Up & 3 & -1,3 & 0 & 7 &  & 2 &  &  &  &  &  &  &  &  \\
+	13:02:22.25 & Unloading & Up & 3 & -1,3 & 0 & 7 &  & 2 &  &  &  &  &  &  &  &  \\
+	13:02:26.25 & Reversing & Up & 3 & -1,3 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:02:27.25 & DoorsClosing & Down & 3 & -1,3 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:02:29.25 & DoorsOpening & Down & 3 & -1,3 & 0 &  & 9 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:31.25 & Loading & Down & 3 & -1,3 & 0 &  & 9 & 0 &  &  &  &  &  &  &  &  \\
+	13:02:33.25 & DoorsClosing & Down & 3 & -1,3 & 0 & 9 &  & 1 &  &  &  &  &  &  &  &  \\
+	13:02:35.25 & Leaving & Down & 3 & -1,3 & 0 & 9 &  & 1 &  &  &  &  &  &  &  &  \\
+	13:02:36.54 & Moving & Down & 2 & -1,2 & 3.87 & 9 &  & 1 & Leaving & Down & 4 & 2,9 & 0 & 5 & 6,8 & 7 \\
+	13:02:37.25 & Moving & Down & 1 & -1,1 & 5 & 9 &  & 1 &  &  &  &  &  &  &  &  \\
+	13:02:37.83 &  &  &  &  &  &  &  &  & Moving & Down & 3 & 2,9 & 3.87 & 5 & 6,8 & 7 \\
+	13:02:38.25 & Stopping & Down & 0 & -1,0 & 5 & 9 &  & 1 &  &  &  &  &  &  &  &  \\
+	13:02:38.54 &  &  &  &  &  &  &  &  & Stopping & Down & 2 & 2,9 & 5 & 5 & 6,8 & 7 \\
+	13:02:39.92 & DoorsOpening & Down & 0 & -1,0 & 0 & 9 &  & 1 &  &  &  &  &  &  &  &  \\
+	13:02:40.21 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 2 & 2,9 & 0 & 5 & 6,8 & 7 \\
+	13:02:41.92 & Unloading & Down & 0 & -1,0 & 0 & 9 &  & 1 &  &  &  &  &  &  &  &  \\
+	13:02:42.21 &  &  &  &  &  &  &  &  & Unloading & Down & 2 & 2,9 & 0 & 5 & 6,8 & 7 \\
+	13:02:43.92 & DoorsClosing & Down & 0 & -1,0 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:02:45.92 & Leaving & Down & 0 & -1,0 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:02:47.21 & Stopping & Down & -1 & -1,-1 & 3.87 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:02:48.50 & Parked & Down & -1 & -1,-1 & 0 &  &  & 0 &  &  &  &  &  &  &  &  \\
+	13:02:56.21 &  &  &  &  &  &  &  &  & Reversing & Down & 2 & 2,9 & 0 &  & 6,8 & 0 \\
+	13:02:57.21 &  &  &  &  &  &  &  &  & DoorsClosing & Up & 2 & 2,9 & 0 &  & 6,8 & 0 \\
+	13:02:59.21 &  &  &  &  &  &  &  &  & Leaving & Up & 2 & 2,9 & 0 &  & 6,8 & 0 \\
+	13:03:00.50 &  &  &  &  &  &  &  &  & Stopping & Up & 3 & 3,9 & 3.87 &  & 6,8 & 0 \\
+	13:03:01.79 &  &  &  &  &  &  &  &  & DoorsOpening & Up & 3 & 3,9 & 0 &  & 6,8 & 0 \\
+	13:03:03.79 &  &  &  &  &  &  &  &  & Loading & Up & 3 & 3,9 & 0 &  & 6,8 & 0 \\
+	13:03:05.79 &  &  &  &  &  &  &  &  & DoorsClosing & Up & 3 & 3,9 & 0 & 8 & 6 & 1 \\
+	13:03:07.79 &  &  &  &  &  &  &  &  & Leaving & Up & 3 & 3,9 & 0 & 8 & 6 & 1 \\
+	13:03:09.08 &  &  &  &  &  &  &  &  & Stopping & Up & 4 & 4,9 & 3.87 & 8 & 6 & 1 \\
+	13:03:10.37 &  &  &  &  &  &  &  &  & DoorsOpening & Up & 4 & 4,9 & 0 & 8 & 6 & 1 \\
+	13:03:12.37 &  &  &  &  &  &  &  &  & Unloading & Up & 4 & 4,9 & 0 & 8 & 6 & 1 \\
+	13:03:14.37 &  &  &  &  &  &  &  &  & DoorsClosing & Up & 4 & 4,9 & 0 &  & 6 & 0 \\
+	13:03:16.37 &  &  &  &  &  &  &  &  & Leaving & Up & 4 & 4,9 & 0 &  & 6 & 0 \\
+	13:03:17.66 &  &  &  &  &  &  &  &  & Moving & Up & 5 & 5,9 & 3.87 &  & 6 & 0 \\
+	13:03:18.37 &  &  &  &  &  &  &  &  & Moving & Up & 6 & 6,9 & 5 &  & 6 & 0 \\
+	13:03:19.37 &  &  &  &  &  &  &  &  & Moving & Up & 7 & 7,9 & 5 &  & 6 & 0 \\
+	13:03:20.37 &  &  &  &  &  &  &  &  & Stopping & Up & 8 & 8,9 & 5 &  & 6 & 0 \\
+	13:03:22.04 &  &  &  &  &  &  &  &  & DoorsOpening & Up & 8 & 8,9 & 0 &  & 6 & 0 \\
+	13:03:24.04 &  &  &  &  &  &  &  &  & Reversing & Up & 8 & 8,9 & 0 &  & 6 & 0 \\
+	13:03:25.04 &  &  &  &  &  &  &  &  & Loading & Down & 8 & 5,9 & 0 &  & 6 & 0 \\
+	13:04:01.04 &  &  &  &  &  &  &  &  & DoorsClosing & Down & 8 & 5,9 & 0 & 6 &  & 18 \\
+	13:04:03.04 &  &  &  &  &  &  &  &  & Leaving & Down & 8 & 5,9 & 0 & 6 &  & 18 \\
+	13:04:04.33 &  &  &  &  &  &  &  &  & Moving & Down & 7 & 5,9 & 3.87 & 6 &  & 18 \\
+	13:04:05.04 &  &  &  &  &  &  &  &  & Moving & Down & 6 & 5,9 & 5 & 6 &  & 18 \\
+	13:04:06.04 &  &  &  &  &  &  &  &  & Stopping & Down & 5 & 5,9 & 5 & 6 &  & 18 \\
+	13:04:07.71 &  &  &  &  &  &  &  &  & DoorsOpening & Down & 5 & 5,9 & 0 & 6 &  & 18 \\
+	13:04:09.71 &  &  &  &  &  &  &  &  & Unloading & Down & 5 & 5,9 & 0 & 6 &  & 18 \\
+	13:04:45.71 &  &  &  &  &  &  &  &  & Reversing & Down & 5 & 5,9 & 0 &  &  & 0 \\
+	13:04:46.71 &  &  &  &  &  &  &  &  & DoorsClosing & Up & 5 & 5,9 & 0 &  &  & 0 \\
+	13:04:48.71 &  &  &  &  &  &  &  &  & Leaving & Up & 5 & 5,9 & 0 &  &  & 0 \\
+	13:04:50.00 &  &  &  &  &  &  &  &  & Moving & Up & 6 & 6,9 & 0 &  &  & 0 \\
+	13:04:50.71 &  &  &  &  &  &  &  &  & Moving & Up & 7 & 7,9 & 0 &  &  & 0 \\
+	13:04:51.71 &  &  &  &  &  &  &  &  & Moving & Up & 8 & 8,9 & 0 &  &  & 0 \\
+	13:04:52.71 &  &  &  &  &  &  &  &  & Stopping & Up & 9 & 9,9 & 0 &  &  & 0 \\
+	13:04:54.38 &  &  &  &  &  &  &  &  & Parked & Up & 9 & 9,9 & 0 &  &  & 0
+\end{longtable}
+
+\end{landscape}
+
 \end{document}

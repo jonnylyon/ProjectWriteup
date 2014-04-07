@@ -22,4 +22,33 @@
 \BOOKMARK [2][-]{subsection.3.7.1}{Domain Model Component}{section.3.7}% 22
 \BOOKMARK [2][-]{subsection.3.7.2}{Scheduler Component}{section.3.7}% 23
 \BOOKMARK [0][-]{chapter.4}{TCOS Elevator Simulator}{part.3}% 24
-\BOOKMARK [-1][-]{part.4}{Algorithms for TCOS Elevator Systems}{}% 25
+\BOOKMARK [1][-]{section.4.1}{Introduction}{chapter.4}% 25
+\BOOKMARK [1][-]{section.4.2}{Additional Requirements}{chapter.4}% 26
+\BOOKMARK [2][-]{subsection.4.2.1}{Specification of Requirements}{section.4.2}% 27
+\BOOKMARK [2][-]{subsection.4.2.2}{Justification of Requirements}{section.4.2}% 28
+\BOOKMARK [1][-]{section.4.3}{Domain Assumptions}{chapter.4}% 29
+\BOOKMARK [1][-]{section.4.4}{High Level Design Decisions}{chapter.4}% 30
+\BOOKMARK [2][-]{subsection.4.4.1}{Option 1: Dynamic `Zoning' Approach}{section.4.4}% 31
+\BOOKMARK [2][-]{subsection.4.4.2}{Option 2: Conflict Resolution Approach}{section.4.4}% 32
+\BOOKMARK [2][-]{subsection.4.4.3}{Option 3: Overlapping Dynamic Zoning Approach}{section.4.4}% 33
+\BOOKMARK [2][-]{subsection.4.4.4}{Option 4: Extended Overlapping Dynamic Zoning Approach}{section.4.4}% 34
+\BOOKMARK [1][-]{section.4.5}{Detailed Description of Changes Made}{chapter.4}% 35
+\BOOKMARK [2][-]{subsection.4.5.1}{Domain Model Component}{section.4.5}% 36
+\BOOKMARK [2][-]{subsection.4.5.2}{Scheduler Component}{section.4.5}% 37
+\BOOKMARK [2][-]{subsection.4.5.3}{Simulation Configuration}{section.4.5}% 38
+\BOOKMARK [1][-]{section.4.6}{Validation}{chapter.4}% 39
+\BOOKMARK [2][-]{subsection.4.6.1}{Domain Model Component}{section.4.6}% 40
+\BOOKMARK [2][-]{subsection.4.6.2}{Scheduler Component}{section.4.6}% 41
+\BOOKMARK [-1][-]{part.4}{Algorithms for TCOS Elevator Systems}{}% 42
+\BOOKMARK [-1][-]{part.5}{Appendices}{}% 43
+\BOOKMARK [0][-]{appendix.A}{Materials referred to in Chapter 3}{part.5}% 44
+\BOOKMARK [1][-]{section.A.1}{XML Materials}{appendix.A}% 45
+\BOOKMARK [2][-]{subsection.A.1.1}{Sample Passenger Arrival Schedule file}{section.A.1}% 46
+\BOOKMARK [2][-]{subsection.A.1.2}{Sample Simulation Configuration file}{section.A.1}% 47
+\BOOKMARK [1][-]{section.A.2}{Validation Materials}{appendix.A}% 48
+\BOOKMARK [2][-]{subsection.A.2.1}{Passenger Arrival Schedule}{section.A.2}% 49
+\BOOKMARK [2][-]{subsection.A.2.2}{Trace Table}{section.A.2}% 50
+\BOOKMARK [0][-]{appendix.B}{Materials referred to in Chapter 4}{part.5}% 51
+\BOOKMARK [1][-]{section.B.1}{Validation Materials}{appendix.B}% 52
+\BOOKMARK [2][-]{subsection.B.1.1}{Passenger Arrival Schedule}{section.B.1}% 53
+\BOOKMARK [2][-]{subsection.B.1.2}{Trace Table}{section.B.1}% 54

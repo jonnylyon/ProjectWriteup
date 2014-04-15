@@ -7,6 +7,7 @@
 \usepackage{tikz}
 \usepackage{longtable}
 \usepackage{pdflscape}
+\usepackage{cite}
 
 \usetikzlibrary{arrows,automata}
 
@@ -45,11 +46,11 @@ Introduction will be going in here.
 \chapter{Core Elevator Simulator}
 \label{ceschapter}
 
-\textit{The development of the Core Elevator Simulator, as described in this chapter, was done in conjunction with another student, Craig Gosnay, who was working on a similar project to develop scheduling algorithms for elevator groups containing double-decker cars.  The writing in this chapter is exclusively my own.}
+\textit{The development of the Core Elevator Simulator, as described in this chapter, was done in conjunction with another student, Craig Gosnay, who was working on a similar project to develop allocation algorithms for elevator groups containing double-decker cars.  The writing in this chapter is exclusively my own.}
 
 \section{Introduction}
 
-A significant portion of the project was dedicated to the development of a simulation tool on which to test the performance of various scheduling algorithms.  Existing literature uses a variety of tools, including one professionally available simulator named Elevate, but none of these tools were available at low cost for use in this project.  There were some open-source simulation tools available online, but in general they did not support the specific case of two-cars-in-one-shaft (TCOS).  It was decided that, instead of attempting to understand and extend an existing tool, I would develop my own from scratch.  I felt that, given the various different methods available of representing and abstracting the specific physical domain, building my own solution would be a good way to ensure that the design decisions and assumptions made were reasonable, as well as being a useful way to consolidate my own understanding of the problem domain.
+A significant portion of the project was dedicated to the development of a simulation tool on which to test the performance of various allocation algorithms.  Existing literature uses a variety of tools, including one professionally available simulator named Elevate, but none of these tools were available at low cost for use in this project.  There were some open-source simulation tools available online, but in general they did not support the specific case of two-cars-in-one-shaft (TCOS).  It was decided that, instead of attempting to understand and extend an existing tool, I would develop my own from scratch.  I felt that, given the various different methods available of representing and abstracting the specific physical domain, building my own solution would be a good way to ensure that the design decisions and assumptions made were reasonable, as well as being a useful way to consolidate my own understanding of the problem domain.
 
 Following discussions with my supervisor, Alan Frisch, it was agreed that I would work together with Craig Gosnay to build the Core Elevator Simulator.  Once this was complete, Craig and I would go our separate ways to extend the Core simulator to meet the requirements of our specific scenarios (in my case TCOS).  This decision was made for two main reasons: firstly, that it would expedite the development process, allowing Craig and I to both move on to algorithm development for our respective scenarios; secondly, that it would allow our two specific solutions to be merged into one general-purpose simulator for use in future projects at the university (following the completion and submission of our own projects).  I would like to thank Craig for his contributions to the Core Elevator Simulator.
 
@@ -143,15 +144,15 @@ The first architecture decision made was whether to use a discrete event-based s
 
 The event-driven approach would overcome this issue by moving the simulation time directly from one event to the next, only needing to perform computations at times when the state of the system changed.  However, this added the complication that the domain system, which is inherently continuous, needed to be represented in a discrete but meaningful and practical manner.  Another issue with the event-driven approach was that it would make it much harder to include a real-time visualisation of the simulation, and that such a visualisation would have to be generated retrospectively from some log of the events.  However, as there was no requirement to implement any visualisation the decision was made to go ahead with an event-based simulator for its performance benefits.
 
-The general architecture of the tool consists of two main logic components, which will be described in greater detail later on.  These two components are kept largely independent, allowing easier testing of each one.  The first component is the domain model.  The domain model performs all computations about the behaviour of the elevator group system, including decisions about lift movements, etc. and these decisions are all based purely on the current state of each individual car and the calls that are currently allocated to that car.  The second component is the scheduler.  The purpose of the scheduler is simply to allocate passenger hall calls to elevator cars in the domain model.  The scheduler is aware of the full state of the domain model, and may use any state information in its allocation decisions, however it cannot directly modify the state.  The only other interaction between the two components is for the scheduler to allocate hall calls to specific cars within the domain model.
+The general architecture of the tool consists of two main logic components, which will be described in greater detail later on.  These two components are kept largely independent, allowing easier testing of each one.  The first component is the domain model.  The domain model performs all computations about the behaviour of the elevator group system, including decisions about lift movements, etc. and these decisions are all based purely on the current state of each individual car and the calls that are currently allocated to that car.  The second component is the allocator.  The purpose of the allocator is simply to allocate passenger hall calls to elevator cars in the domain model.  The allocator is aware of the full state of the domain model, and may use any state information in its allocation decisions, however it cannot directly modify the state.  The only other interaction between the two components is for the allocator to allocate hall calls to specific cars within the domain model.
 
-A third component is the agenda and main control loop.  The agenda contains two types of events: those pertaining to passenger arrivals (i.e. hall calls), and those to state changes of specific cars in the domain model.  The control loop pulls each event off of the agenda in order of timestamp, and triggers either the scheduler or a car in the domain model to act upon them as appropriate.  Each of these events is handled synchronously; all of the computation pertaining to one event occurs before the next event is taken from the agenda.
+A third component is the agenda and main control loop.  The agenda contains two types of events: those pertaining to passenger arrivals (i.e. hall calls), and those to state changes of specific cars in the domain model.  The control loop pulls each event off of the agenda in order of timestamp, and triggers either the allocator or a car in the domain model to act upon them as appropriate.  Each of these events is handled synchronously; all of the computation pertaining to one event occurs before the next event is taken from the agenda.
 
 The final notable component is the passenger distribution generator which, as per the requirements, generates passenger arrival schedules based on Poisson distributions as configured by the user.
 
 Other uninteresting components include the simulation configuration loader, which parses the XML simulation configuration file, and the logger which writes content into a log file and (optionally) prints them to the console at run time.
 
-A significant decision had to be made about how different schedulers could be written and used with the simulator.  One possibility was that scheduler methods could be written separately and compiled to Dynamic Linked Libraries (DLL), which could then be dynamically pulled into the simulator at runtime, but this had the problem that the schedulers would then not be able to have any memory of their own, which might be desirable for algorithms involving learning.  Another possibility was to do it the other way around -- to have the scheduler pull the simulation logic in as a DLL -- but then the memory of the domain model would have to be passed around via the scheduler all the time, breaking some of the cohesion and making the domain logic slightly harder.  After discussion with Alan Frisch, it was decided that, for the time being, the different schedulers would simply be built into the same executable as the rest of the simulator and, should another scheduler be added, the system would need to be recompiled.
+A significant decision had to be made about how different allocators could be written and used with the simulator.  One possibility was that allocation algorithms could be written separately and compiled to Dynamic Linked Libraries (DLL), which could then be dynamically pulled into the simulator at runtime, but this had the problem that the allocators would then not be able to have any memory of their own, which might be desirable for algorithms involving learning.  Another possibility was to do it the other way around -- to have the allocator pull the simulation logic in as a DLL -- but then the memory of the domain model would have to be passed around via the allocator all the time, breaking some of the cohesion and making the domain logic slightly harder.  After discussion with Alan Frisch, it was decided that, for the time being, the different allocators would simply be built into the same executable as the rest of the simulator and, should another allocator be added, the system would need to be recompiled.
 
 \section{Domain Assumptions}
 
@@ -169,7 +170,7 @@ In order to simplify the logic used in the implementation of the simulator, the 
 		\item The distance between consecutive floors is the same throughout the building.
 		\item Passengers will not attempt to travel from one floor to the same floor (origin and destination floors will not be equal).
 		\item Continuous allocation algorithms will only revoke previous call allocations when new calls come in (they will not generally monitor the state of the system except at times when they are invoked by new passengers making hall calls). \textbf{[Is this clear?]}
-		\item In a Destination Control system, if a Passenger Group is assigned to a car which turns out not have enough capacity to accommodate the group when it arrives, the entire group will wait at the floor until the same car comes back again.  Schedulers should not allocate passengers to cars which cannot accommodate them.
+		\item In a Destination Control system, if a Passenger Group is assigned to a car which turns out not have enough capacity to accommodate the group when it arrives, the entire group will wait at the floor until the same car comes back again.  Allocators should not allocate passengers to cars which cannot accommodate them.
 		\item Passenger Groups will not contain more people than can be accommodated by the smallest car when it is otherwise empty.
 	\end{itemize}
 
@@ -384,13 +385,13 @@ The Stopping state applies when the car is moving, has reached a decision point,
 \[ V=0 \text{ by definition of Stopping} \]
 \[ \text{and } T=\frac{U}{D} \text{ from equation \ref{motioneq1}.} \]
 
-\subsection{Scheduler Component}
+\subsection{Allocator Component}
 
-The Scheduler component in the Core Elevator Simulator consists of an Interface class, named IScheduler, defining the methods that a Scheduler implemented by the user must include.  In fact, the IScheduler interface is very simple and contains just one method which is called by the main control loop when a new PassengerGroup arrival is taken from the agenda:
+The Allocator component in the Core Elevator Simulator consists of an Interface class, named IAllocator, defining the methods that an Allocator implemented by the user must include.  In fact, the IAllocator interface is very simple and contains just one method which is called by the main control loop when a new PassengerGroup arrival is taken from the agenda:
 
 \lstset{language=[Sharp]C, basicstyle=\ttfamily\tiny, breaklines=true, breakatwhitespace=true }
 \begin{lstlisting}
-interface IScheduler
+interface IAllocator
 {
 	/// <summary>
 	/// Allocates a given group of passengers to a specific car within
@@ -402,14 +403,14 @@ interface IScheduler
 }
 \end{lstlisting}
 
-There is also an enum class, SchedulerType, which defines the names of all of schedulers.  Then, there is a static method which takes a specific SchedulerType enum value and returns an instance of the relevant Scheduler as implemented by the user.
+There is also an enum class, AllocatorType, which defines the names of all of the allocators.  Then, there is a static method which takes a specific AllocatorType enum value and returns an instance of the relevant Allocator as implemented by the user.
 
-In order to demonstrate the ease with which a new Scheduler can be added, I will include an example of a very simple scheduler, the ClosestCar scheduler, which simply allocates each call to whichever car is closest to the call at the time the call is made, ignoring the directions in which cars are moving.
+In order to demonstrate the ease with which a new Allocator can be added, I will include an example of a very simple allocation algorithm, the ClosestCar algorithm, which simply allocates each call to whichever car is closest to the call at the time the call is made, ignoring the directions in which cars are moving.
 
-Firstly, the user must create a new class, which implements IScheduler.  As described, the AllocateCall method must be implemented, as follows:
+Firstly, the user must create a new class, which implements IAllocator.  As described, the AllocateCall method must be implemented, as follows:
 
 \begin{lstlisting}
-class ClosestCarScheduler : IScheduler
+class ClosestCarAllocator : IAllocator
 {
 	/// <summary>
 	/// Allocates a given group of passengers to a specific car within
@@ -434,10 +435,10 @@ class ClosestCarScheduler : IScheduler
 }
 \end{lstlisting}
 
-Secondly, the name of the Scheduler must be added to the SchedulerType enum:
+Secondly, the name of the Allocator must be added to the AllocatorType enum:
 
 \begin{lstlisting}
-enum SchedulerType
+enum AllocatorType
 {
 	Manual,
 	Random,
@@ -445,26 +446,26 @@ enum SchedulerType
 }
 \end{lstlisting}
 
-Finally, the new Scheduler must be added to the mapping method:
+Finally, the new Allocator must be added to the mapping method:
 
 \begin{lstlisting}
-public static IScheduler getScheduler(SchedulerType scheduler)
+public static IAllocator getAllocator(AllocatorType allocator)
 {
-	switch (scheduler)
+	switch (allocator)
 	{
-		case SchedulerType.Manual:
-			return new ManualScheduler.ManualScheduler();
-		case SchedulerType.Random:
-			return new RandomScheduler.RandomScheduler();
-		case SchedulerType.ClosestCar:
-			return new ClosestCarScheduler.ClosestCarScheduler();
+		case AllocatorType.Manual:
+			return new ManualAllocator.ManualAllocator();
+		case AllocatorType.Random:
+			return new RandomAllocator.RandomAllocator();
+		case AllocatorType.ClosestCar:
+			return new ClosestCarAllocator.ClosestCarAllocator();
 	}
 	
 	return null;
 }
 \end{lstlisting}
 
-Once the user has performed these three steps, the simulator can be recompiled and the new Scheduler can be used.
+Once the user has performed these three steps, the simulator can be recompiled and the new Allocator can be used.
 
 \subsection{Passenger Distribution Generator}
 
@@ -482,7 +483,7 @@ The purpose of the Passenger Distribution generator is to load an XML `specifica
 		<DestinationFloor Floor="2" ArrivalsPerMinuteMean="1.0" GroupSizeMean="1" />
 	</ArrivalFloor>
 	<ArrivalFloor Floor="2">
-		<DestinationFloor Floor="0" ArrivalsPerMinuteMean=”0.3" GroupSizeMean="1" />
+		<DestinationFloor Floor="0" ArrivalsPerMinuteMean="0.3" GroupSizeMean="1" />
 		<DestinationFloor Floor="1" ArrivalsPerMinuteMean="0.5" GroupSizeMean="1" />
 	</ArrivalFloor>
 </ArrivalFloors>
@@ -541,7 +542,7 @@ When generating the schedule, we progress through time in steps specified by the
 \subsection{Simulation Configuration}
 All parameters of a simulation run are specified in a single configuration file, so that this configuration can be easily stored and re-run at a later date if desired.  A sample configuration file is shown in the appendix, but it includes the following parameters:
 \begin{itemize}
-	\item \textbf{Scheduler} -- the name of the scheduler that is to be used
+	\item \textbf{Allocator} -- the name of the allocator that is to be used
 	\item \textbf{Passenger Distribution parameters}
 	\begin{itemize}
 		\item Whether to load an existing distribution file or create a new one based on a given specification file
@@ -582,7 +583,7 @@ The architecture of the Core Elevator Simulator allows each component to be vali
 
 \subsection{Domain Model Component}
 
-The most significant component to validate is the Domain Model component.  In order to test it I designed a specific passenger arrival schedule, containing a total of 13 groups and 39 passengers arriving over the course of 2\textonehalf minutes, that would result in each workflow within the Car domain logic being tested.  The test modelled a building with just 3 floors, since this was enough to give confidence about the performance over a larger number without increasing the complexity of the hand-calculations.  Since the cars do not interact with each other in the Core Elevator Simulator, I built a dummy scheduler that would assign all calls to car 0, meaning that all calls would be handled by the same car. \textbf{[These two points must be tested at least a little]}
+The most significant component to validate is the Domain Model component.  In order to test it I designed a specific passenger arrival schedule, containing a total of 13 groups and 39 passengers arriving over the course of 2\textonehalf minutes, that would result in each workflow within the Car domain logic being tested.  The test modelled a building with just 3 floors, since this was enough to give confidence about the performance over a larger number without increasing the complexity of the hand-calculations.  Since the cars do not interact with each other in the Core Elevator Simulator, I built a dummy allocator that would assign all calls to car 0, meaning that all calls would be handled by the same car. \textbf{[These two points must be tested at least a little]}
 
 Using Microsoft Excel to maintain a trace table, I worked through the way in which the car should behave as the different calls came in, performing all of the movement calculations and other mathematics by hand.  I calculated that the simulation run with my designed passenger arrival schedule would take 4 minutes and 14 seconds, and noted down the specific boarding and alighting times of each Passenger Group.  I also had a record of every state change that would take place in the car during the simulation run, which is shown in the appendix.
 
@@ -599,11 +600,11 @@ when, in fact, the correct formula is slightly different, as follows
 
 After I had corrected this implementation, I tried the simulation run again and this time found that everything was behaving as expected.  All of the car state changes happened at the right time (within the 10-millisecond accuracy to which I had done my hand calculations), and all of the passenger boarding and arrival times were as expected too.  I am now confident that the Domain Model component of the Core Elevator Simulator behaves correctly.
 
-\subsection{Scheduler Component}
+\subsection{Allocator Component}
 
-Since the Scheduler component will be re-implemented for each scheduling algorithm that is run on the simulator, it doesn't really make sense to completely validate it at this stage.  However, in order to test the general interactions between the Scheduler and the Domain Model component I have used the basic ClosestCar scheduler as described above.  I then used a Manual scheduler, which asks the user to allocate calls to cars, to make the decisions in my head (in the way that I believe the ClosestCar scheduler should allocate them) and ensure that the behaviour of the simulator when using the ClosestCar scheduler matches the behaviour when I make the decisions myself.
+Since the Allocator component will be re-implemented for each allocation algorithm that is run on the simulator, it doesn't really make sense to completely validate it at this stage.  However, in order to test the general interactions between the Allocator and the Domain Model component I have used the basic ClosestCar allocator as described above.  I then used a Manual allocator, which asks the user to allocate calls to cars, to make the decisions in my head (in the way that I believe the ClosestCar allocator should allocate them) and ensure that the behaviour of the simulator when using the ClosestCar allocator matches the behaviour when I make the decisions myself.
 
-After running the simulation in both scenarios (with the same passenger arrival schedule as used in the domain model component tests), I found that the logs were identical.  Therefore, I am confident that the scheduler component is behaving as it should.  It would not be useful to print the entire log here, but I will print the evaluation results which can be used for later verification if necessary:
+After running the simulation in both scenarios (with the same passenger arrival schedule as used in the domain model component tests), I found that the logs were identical.  Therefore, I am confident that the allocator component is behaving as it should.  It would not be useful to print the entire log here, but I will print the evaluation results which can be used for later verification if necessary:
 
 \begin{lstlisting}
 Average waiting time:                4.92269230769231
@@ -614,7 +615,7 @@ Longest waiting time:                38.249
 Longest time to destination:         66.667
 \end{lstlisting}
 
-When the simulator is used with new Scheduling algorithms, care should be taken to ensure that the new Schedulers have been implemented correctly, and tests should be performed to validate the implementations.
+When the simulator is used with new allocation algorithms, care should be taken to ensure that the new Allocators have been implemented correctly, and tests should be performed to validate the implementations.
 
 \chapter{TCOS Elevator Simulator}
 \label{teschapter}
@@ -655,7 +656,7 @@ Requirement 1 specifies that the same evaluation objectives should be used in th
 
 In some scenarios, a building operator might choose to upgrade some subset of their elevator shafts to TCOS, while leaving the remaining shafts operating in the traditional manner.  Requirement 2 allows different such scenarios to be evaluated.
 
-The garage floor in requirement 3 allows the lower car in a TCOS shaft to park out of the way, so that the upper car can visit all floors.  The parking functionality in requirement 4 allows the Scheduler to make use of this floor, as well as having the upper car automatically park at the top floor so as to maximise the floors available to the lower car.
+The garage floor in requirement 3 allows the lower car in a TCOS shaft to park out of the way, so that the upper car can visit all floors.  The parking functionality in requirement 4 allows the Allocator to make use of this floor, as well as having the upper car automatically park at the top floor so as to maximise the floors available to the lower car.
 
 Requirement 5 stops the deadlock situation whereby a call for the top floor is allocated to the lower car, which can never reach the call due to the presence of the upper car.
 
@@ -677,22 +678,22 @@ The TCOS case introduced some complications to the constraints, which mean that 
 
 \subsection{Option 1: Dynamic `Zoning' Approach}
 
-This approach works by considering each car within a shaft to have an exclusive zone of floors transiently defined as the minimal set of consecutive floors containing (a) the current floor of the car, (b) the car's park floor, and (c) the locations of all calls currently assigned to the car.  When the Scheduler attempts to assign a call to a car, the car must either accept or reject the call based on the following rules:
+This approach works by considering each car within a shaft to have an exclusive zone of floors transiently defined as the minimal set of consecutive floors containing (a) the current floor of the car, (b) the car's park floor, and (c) the locations of all calls currently assigned to the car.  When the Allocator attempts to assign a call to a car, the car must either accept or reject the call based on the following rules:
 	\begin{enumerate}
 		\item If both the origin and destination of the call are within the car's current zone, the call will be accepted.
 		\item Otherwise, if both the origin and destination lie within the range of floors that the car's current zone can be extended into without overlapping with the zone of another car in the same shaft, the call will be accepted and the car's current zone will be extended accordingly.
-		\item Otherwise, the call will be rejected and the Scheduler will have to allocate the call to another car.
+		\item Otherwise, the call will be rejected and the Allocator will have to allocate the call to another car.
 	\end{enumerate}
 
 In this case, the park floors should be fixed as the highest floor (for the upper car) and the garage floor (for the lower car).
 
-This approach very effectively separates the cars and does so without ultimately limiting the range of floors that any car can serve (for example, with appropriate Scheduler behaviour, the upper car could conceivably serve a call at the ground floor, if the lower car is parked at the garage floor).  However, it is inefficient in that it could restrict the allocation of calls that might actually be feasible.  For example, if the upper car is at floor 8, and the lower car is travelling down from floor 4 to floor 1, it might be reasonable to allocate a call at floor 3 to the upper car.  This approach would not allow the allocation.
+This approach very effectively separates the cars and does so without ultimately limiting the range of floors that any car can serve (for example, with appropriate Allocator behaviour, the upper car could conceivably serve a call at the ground floor, if the lower car is parked at the garage floor).  However, it is inefficient in that it could restrict the allocation of calls that might actually be feasible.  For example, if the upper car is at floor 8, and the lower car is travelling down from floor 4 to floor 1, it might be reasonable to allocate a call at floor 3 to the upper car.  This approach would not allow the allocation.
 
 \subsection{Option 2: Conflict Resolution Approach}
 
 This more complicated approach allows any call to be allocated to any car at any time, and then relies on the control logic to resolve conflicts between cars.  In general, there are two types of conflict: one where the cars are travelling in the same direction but the car in front is delaying the car behind and the other where the cars are both travelling towards each other.  The former of these is simple to resolve from a conceptual perspective – the one behind must wait for the other to move out of the way before proceeding.  The latter presents some issue as one car (a `slave') must reverse for some distance to allow the other one (the `master') to serve its calls.  Some method of determining which car would be given priority would be required in order to use this approach.
 
-While this approach has the potential to solve the efficiency problem of option 1, it also has some problems of its own.  For example, the master-slave behaviour would result in some conflict with the passenger expectation constraints (i.e. that a car must not change direction if it currently has passengers on board).  Additionally, it means that some non-trivial logic which is conceptually part of the Scheduling process is fixed within the Domain Model component.
+While this approach has the potential to solve the efficiency problem of option 1, it also has some problems of its own.  For example, the master-slave behaviour would result in some conflict with the passenger expectation constraints (i.e. that a car must not change direction if it currently has passengers on board).  Additionally, it means that some non-trivial logic which is conceptually part of the allocation process is fixed within the Domain Model component.
 
 \subsection{Option 3: Overlapping Dynamic Zoning Approach}
 
@@ -703,7 +704,7 @@ The following rules would be used to decide whether or not to accept a hall call
 	\item If both the origin and destination of the call are within the car's current zone, the call will be accepted.
 	\item Otherwise, if the car's current zone contains a floor already occupied by the other car in the shaft, and both the origin and destination of the call are within the other car's zone without being the last floor in its zone, the call will be accepted and the car's current zone will be extended accordingly.
 	\item Otherwise, if both the origin and destination lie within the range of floors that the car's current zone can be extended into without including the current floor of the other car in the same shaft, the call will be accepted and the car's current zone will be extended accordingly.
-	\item Otherwise, the call will be rejected and the Scheduler will have to allocate the call to another car.
+	\item Otherwise, the call will be rejected and the Allocator will have to allocate the call to another car.
 \end{enumerate}
 
 Note that if one car has already entered the overlap zone, the second rule allows the waiting car's zone to expand further past the other car.  This does not cause any problem, so long as the other car's zone always protrudes at least one floor further so as to avoid deadlock occurring later on.
@@ -726,7 +727,7 @@ In this option, the rules for accepting and rejecting calls are as follows:
 		\item Otherwise, if both the origin and destination of the call are within the car's current zone, the call will be accepted.
 		\item Otherwise, if the car's current floor is not inside the overlap zone, and both the origin and destination of the call are within the other car's zone without being the last floor in its zone, the call will be accepted and the car's current zone will be extended accordingly.
 		\item Otherwise, if the car's current floor is inside the overlap zone, and both the origin and destination lie within the range of floors that the car's current zone can be extended into without including the current floor of the other car in the same shaft, the call will be accepted and the car's current zone will be extended accordingly.
-		\item Otherwise, the call will be rejected and the Scheduler will have to allocate the call to another car.
+		\item Otherwise, the call will be rejected and the Allocator will have to allocate the call to another car.
 	\end{enumerate}
 
 Note that the lower car can never accept a call that requires it to visit the highest floor, and the upper car can never accept a call that requires it to visit the garage floor.  This rule is implicitly satisfied by the rules given above (a car cannot accept a call where either the origin or destination floor is the last floor in the other car's zone).
@@ -737,13 +738,13 @@ This option further builds on the benefits of options 1 and 3, without contraven
 
 \section{Detailed Description of Changes Made}
 
-In this section I will describe the changes that were necessary in order to extend the Core Elevator Simulator for the TCOS case.  The majority of the changes were to the Domain Model component, though minor changes were also necessary in the Scheduler and Simulation Configuration components.
+In this section I will describe the changes that were necessary in order to extend the Core Elevator Simulator for the TCOS case.  The majority of the changes were to the Domain Model component, though minor changes were also necessary in the Allocator and Simulation Configuration components.
 
 \subsection{Domain Model Component}
 
 There was a large amount of logic that needed to be added to the Domain Model in the TCOS Elevator Simulator.  In order to maintain the generality of the simulator (so that it could still be used for simulations including traditional elevator shafts as well as TCOS shafts) a new TCOSCar class was added, and the traditional Car class was left largely unchanged.  The Core Elevator Simulator had been designed such that the traditional Car class implemented an interface, ICar, and all interactions with the Car were via the ICar interface.  This meant that the TCOSCar class simply needed to interface the ICar interface in order to be compatible with the rest of the program.
 
-Since the Extended Overlapping Zoning Approach (option 4, discussed above) requires that a TCOS car can reject call allocations, it was necessary to modify the ICar interface slightly so that the allocateHallCall method, called by Schedulers to allocate a call to a car, returned a Boolean value indicating the success (true) or failure (false) of the allocation.  The traditional Car class had to be modified accordingly, simply returning true (for success) in all cases.
+Since the Extended Overlapping Zoning Approach (option 4, discussed above) requires that a TCOS car can reject call allocations, it was necessary to modify the ICar interface slightly so that the allocateHallCall method, called by Allocators to allocate a call to a car, returned a Boolean value indicating the success (true) or failure (false) of the allocation.  The traditional Car class had to be modified accordingly, simply returning true (for success) in all cases.
 
 Aside from the minor `housekeeping' changes described above, the following three methods were added in the TCOS implementation, corresponding to certain aspects of logic in option 4:
 	\begin{description}
@@ -758,9 +759,9 @@ A new action was added to the CarAction options, named `Waiting', which a TCOS c
 
 It was also necessary to change the behaviour of the cars so that, instead of simply stopping in situ and changing its action to Idle when there are no calls to serve, the car would move to its designated park floor at this stage before entering changing to a new action, named `Parked'.
 
-\subsection{Scheduler Component}
+\subsection{Allocator Component}
 
-The only change necessary in the Scheduler component related to the fact that a car can now reject hall call allocations, with the allocation method returning true or false to indicate whether or not the allocation was accepted.  Therefore, Schedulers must be aware of the potential for an allocation to fail and, if appropriate, implement code to handle an allocation failure and attempt allocation to another car.
+The only change necessary in the Allocator component related to the fact that a car can now reject hall call allocations, with the allocation method returning true or false to indicate whether or not the allocation was accepted.  Therefore, Allocators must be aware of the potential for an allocation to fail and, if appropriate, implement code to handle an allocation failure and attempt allocation to another car.
 
 \subsection{Simulation Configuration}
 
@@ -771,7 +772,7 @@ The second change was to add `TCOS' as an option for the car type, so that the u
 \section{Validation}
 
 \subsection{Domain Model Component}
-As with the Core Elevator Simulator, the most significant validation required in the TCOS Elevator Simulator is in the Domain Model component.  Again, since each car only interacts with the other car in its shaft, it was appropriate to focus the testing on the behaviour of cars within a single shaft.  This time, I used a building consisting of 10 floors, numbered 0 to 9, as well as a garage floor below floor 0 (numbered -1) which could not be used by passengers.  The passenger arrival schedule contained 9 passenger groups, totalling 39 people, arriving over the course of 2\textonehalf minutes.  I built a scheduler named TwoZonesScheduler which would allocate each hall call to either the upper or lower car depending on the origin and destination floors of the passenger group involved (if the average of the origin and destination was greater than or equal to 4.5 the scheduler would first attempt to allocate it to the upper car, otherwise it would first attempt to allocate it to the lower car).  If the first allocation attempt failed, it would allocate it to the other car instead.
+As with the Core Elevator Simulator, the most significant validation required in the TCOS Elevator Simulator is in the Domain Model component.  Again, since each car only interacts with the other car in its shaft, it was appropriate to focus the testing on the behaviour of cars within a single shaft.  This time, I used a building consisting of 10 floors, numbered 0 to 9, as well as a garage floor below floor 0 (numbered -1) which could not be used by passengers.  The passenger arrival schedule contained 9 passenger groups, totalling 39 people, arriving over the course of 2\textonehalf minutes.  I built an allocator named TwoZonesAllocator which would allocate each hall call to either the upper or lower car depending on the origin and destination floors of the passenger group involved (if the average of the origin and destination was greater than or equal to 4.5 the allocator would first attempt to allocate it to the upper car, otherwise it would first attempt to allocate it to the lower car).  If the first allocation attempt failed, it would allocate it to the other car instead.
 
 Again, I used Microsoft Excel to maintain a trace table of the behaviour of both cars in the shaft, performing all calculations by hand.  I calculated that the full simulation run would take a total of 4 minutes and 54 seconds, and kept a record of the boarding and alighting times of each passenger group.  The full trace table, including every state change that took place, is shown in the appendix.
 
@@ -783,7 +784,7 @@ The passenger arrival schedule was designed to invoke all of the code path scena
 		\item A car wishes to enter the overlap zone when the other car already occupies the zone.  The car must wait for the other car to turn back before it can continue.
 		\item A car has finished serving all calls in P1 and needs to reverse in order to serve P2 calls.  However, the other car has entered the overlap zone and needs to come to the floor that this car currently occupies.  This car must first continue away from its calls so that the other car can serve its calls, so as to avoid a deadlock scenario.
 		\item A car has finished serving all calls in P1, P2 and P3.  It must return to its park floor and wait for further calls to be allocated.
-		\item A car is inside the overlap zone when the scheduler attempts to allocate a P1 call that would require the car to visit the floor at which the other car is currently waiting.  Since this would result in a deadlock scenario, the car must reject the call.
+		\item A car is inside the overlap zone when the allocator attempts to allocate a P1 call that would require the car to visit the floor at which the other car is currently waiting.  Since this would result in a deadlock scenario, the car must reject the call.
 	\end{itemize}
 
 When I first ran the TCOS Elevator Simulator configured as described above, the two cars in the shaft entered a deadlock scenario.  This meant that either there was a problem with the logic decided upon in option 4 (extended overlapping dynamic zoning) or that it had been incorrectly implemented in the code.  I placed a breakpoint in the code to be activated just before the deadlock scenario occurred so that I could examine the implementation and determine the cause of the problem.  It turned out that the implementation of the logic in the MustContinueInCurrentDirection method was flawed in that it only considered the floor of the other car's state, even if the other car had been authorised to proceed to the next floor and was moving towards it.  I changed the code to use the CurrentFloorsOccupied property of TCOSCar which includes the floor towards which a car has started moving.
@@ -797,13 +798,14 @@ After I had corrected this aspect of the code, I ran the simulation again and fo
 	\label{tcosvalidationgraph}
 \end{figure}
 
-\subsection{Scheduler Component}
-
-The only change to the Scheduler component was for Schedulers to handle call allocation failures from Cars.  This was implicitly tested during the Domain Model tests described above and performed correctly.  However, it is still necessary that each new Scheduler that is implemented should be properly validated as discussed in the Core Elevator Simulator part.
+\subsection{Allocator Component}
+The only change to the Allocator component was for Allocators to handle call allocation failures from Cars.  This was implicitly tested during the Domain Model tests described above and performed correctly.  However, it is still necessary that each new Allocator that is implemented should be properly validated as discussed in the Core Elevator Simulator part.
 
 \part{Algorithms for TCOS Elevator Systems}
 
-\bibliography{project}
+\chapter{Development and Evaluation of TCOS Allocation Algorithms}
+
+\bibliography{Resources}
 
 \appendix
 \part{Appendices}
@@ -912,7 +914,7 @@ The only change to the Scheduler component was for Schedulers to handle call all
 
 \begin{lstlisting}
 <SimulationConfig>
-	<Scheduler>ClosestCar</Scheduler>
+	<Allocator>ClosestCar</Allocator>
 	
 	<PassengerDistribution source="load">
 		<SpecificationFile>spec/3 floor up peak sample.xml</SpecificationFile>

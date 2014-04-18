@@ -8,6 +8,7 @@
 \usepackage{longtable}
 \usepackage{pdflscape}
 \usepackage{cite}
+\usepackage{tabularx}
 
 \usetikzlibrary{arrows,automata}
 
@@ -178,7 +179,7 @@ In order to simplify the logic used in the implementation of the simulator, the 
 
 \subsection{Domain Model Component}
 
-As previously described, the domain model component contains a conceptual model of the elevator group, as well as the logic used to control the movement of each car.  Each car maintains its own list of allocated calls, and all movement decisions are made based on the calls on the call list.  The calls list is held in three groups:
+As previously described, the domain model component contains a conceptual model of the elevator group, as well as the logic used to control the movement of each car.  Each car maintains its own list of allocated calls, and all movement decisions are made based on the calls on the call list.  The calls list is held in three groups representing the three `passages' of an elevator car \citep{Gagov2001,Rong2003}:
 \begin{itemize}
 	\item P1 (First passage) -- calls that can be served by the car without reversing.
 	\item P2 (Second passage) -- calls that require the car to reverse once before serving.
@@ -215,18 +216,18 @@ Figure \ref{shaftstates} gives an example of a possible state space for an upwar
 \end{figure}
 
 As well as the floor, speed and direction, the state of the car contains two other parameters.  These are an action and a Boolean representing whether or not the doors are open.  While the latter is self-explanatory, the car action parameter requires some explanation.  The ten possible actions are defined in an enumeration called CarAction, and are described below:
-\begin{itemize}
-	\item Leaving -- The car state has this action when the car is accelerating away from having stopped at one floor and moving towards the decision point for the next floor.
-	\item Moving -- This action is when the lift is passing a floor; it is moving, but it has not just left a floor, neither is it stopping at one.
-	\item Stopping -- This action is when the lift has passed a decision point and decided to stop at the associated floor.
-	\item DoorsOpening -- The car state has this action during the time that the car is opening its doors.
-	\item Unloading -- This action is used for the time when passengers are getting out of the car.
-	\item Reversing -- This action is used for the delay caused by a car configuring itself to move in the opposite direction.  The time of this action can be set to zero if changing the direction of a car incurs no delay, but previous literature assumes some delay will be caused.
-	\item Loading -- Used during the time when passengers are boarding the car.
-	\item DoorsClosing -- Used during the time when the car is closing its doors.
-	\item Idle -- None of the above actions are currently taking place.
-	\item Stopped -- This is something of a placeholder action, in that it does not represent any particular domain concept.  However, it does hold the logic to decide which of the above actions to enter next (as shown in Figure \ref{caractions}).
-\end{itemize}
+\begin{description}
+	\item[Leaving] The car state has this action when the car is accelerating away from having stopped at one floor and moving towards the decision point for the next floor.
+	\item[Moving] This action is when the lift is passing a floor; it is moving, but it has not just left a floor, neither is it stopping at one.
+	\item[Stopping] This action is when the lift has passed a decision point and decided to stop at the associated floor.
+	\item[DoorsOpening] The car state has this action during the time that the car is opening its doors.
+	\item[Unloading] This action is used for the time when passengers are getting out of the car.
+	\item[Reversing] This action is used for the delay caused by a car configuring itself to move in the opposite direction.  The time of this action can be set to zero if changing the direction of a car incurs no delay, but previous literature assumes some delay will be caused.
+	\item[Loading] Used during the time when passengers are boarding the car.
+	\item[DoorsClosing] Used during the time when the car is closing its doors.
+	\item[Idle] None of the above actions are currently taking place.
+	\item[Stopped] This is something of a placeholder action, in that it does not represent any particular domain concept.  However, it does hold the logic to decide which of the above actions to enter next (as shown in Figure \ref{caractions}).
+\end{description}
 
 \begin{figure} [h]
 \centering
@@ -803,7 +804,73 @@ The only change to the Allocator component was for Allocators to handle call all
 
 \part{Algorithms for TCOS Elevator Systems}
 
-\chapter{Development and Evaluation of TCOS Allocation Algorithms}
+\chapter{Discussion of Allocation Algorithms}
+
+In this chapter, I will discuss a number of allocation algorithms that I have developed or adapted for use in the TCOS case.  In Chapters \ref{algsimchapter} and \ref{algtestchapter} I will describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
+
+\section{Estimated Time of Arrival (ETA)}
+
+The Estimated Time of Arrival (ETA) algorithm is an existing algorithm for traditional elevator systems which has been widely studied in the literature \citep{Rong2003, Nikovski2003} and performed well in simulations \citep{Rong2003}.  The algorithm happens to work in such a way that its concepts can be adapted for use in the TCOS case.  After briefly describing ETA in its original form, I will discuss three ways in which I have adapted it for TCOS systems.
+
+ETA is an immediate allocation algorithm that aims to minimise the average waiting time of all passengers in the system.  Every time a new hall call is made, it considers allocating the call to each one of the cars in the system and estimates the cost each of the possible allocations.  It then allocates the call to the car which results in the lowest estimated cost.  The cost estimation function of allocating the call to a given car is made up of two parts: the estimated time taken for the car to reach the new call (Estimated Waiting Time), and the total additional waiting time caused to the other passengers currently waiting for the car (System Degradation Factor) \citep{Rong2003}.  The Estimated Waiting Time and System Degradation Factor are summed together to provide the total estimated cost.
+
+A simple modification to ETA allows allocation costs to be estimated based on squared waiting times, thus preferring a narrower spread of results over one where some individuals benefit highly and others are severely disadvantaged.
+
+\citet{Rong2003} present a reallocation variant of ETA, which allows calls to be retrospectively reassigned after the initial assignment, but since this is not compatible with Destination Control systems I will not describe it here.  They also describe methods of predicting passenger destinations in systems without Destination Control, but since Destination Control gives us full knowledge of the intentions of passengers as soon as they have made hall calls there is no need for us to consider these methods.
+
+ETA
+P		SP		S		/
+15		16		16		17
+731		830		926		1077
+68		71		69		71
+6967	7373	6925	7376
+311		291		280		299
+429		372		357		367
+
+ETD
+P		SP		S		/
+34		33		?		?
+2198	2050			
+68		69				
+6303	6115			
+249		221				
+274		259				
+
+\subsection{Na\"{i}ve ETA}
+
+The simplest method of adapting ETA for TCOS systems is simply to apply the basic cost estimation function to each car in the system ignoring the interactions between two cars in the same shaft.  The method of calculating the approximate cost is as follows:
+
+Assume the following given time parameters (all in seconds):
+
+\begin{tabularx}{\linewidth}{l X}
+	$Start$		& The time taken for a car to start moving from loading (including closing doors, additional time required for acceleration, etc.) \\
+	$Stop$		& The time taken for a car to stop moving and start loading (including opening doors, additional time required for deceleration, etc.) \\
+	$Travel$	& The time taken for a car to travel between floors once moving \\
+	$Reverse$	& The additional time taken for a car to reconfigure its direction when stopped \\
+	$Unload$	& The time taken for a single passenger to alight the car \\
+	$Load$		& The time taken for a single passenger to board the car
+\end{tabularx}
+
+Using these time parameters, and the full knowledge of all passengers currently waiting for or travelling inside the car, predict, for each passenger group, the amount of time that they will have to wait before the car arrives to pick them up.  Then, consider allocating the new hall call to the car and the effect that this will have on the waiting times of the other passengers.  This effect is the System Degradation Factor (SDF) and can be stated as follows:
+\[ SDF(c, h) = \sum\limits_{g \in G(c)} (EWT(g, c, G(c) \cup \left\{ h \right\}) - EWT(g, c, G(c)))\]
+where $c$ is the car, $h$ is the new hall call to be allocated, $G(c)$ is the set of groups already allocated to car $c$ and $EWT(g,c,G(c))$ is the estimated time taken for car $c$ to reach call $g$ given the calls in $G(c)$ (estimated waiting time for $g$).
+
+The total estimated cost of allocating call $h$ to car $c$ is as follows:
+\[ Cost(c, h) = SDF(c, h) + EWT(h, c, G(c) \cup \left\{ h \right\}) \]
+
+Estimated waiting times can be calculated en masse by doing a rough simulation of the behaviour of the elevator using the six time parameters above and noting the boarding times of each group.  It would be possible to perform this simulation more exactly by using the simulation methods employed by my own TCOS Elevator Simulator but this is computationally expensive and in real world applications allocation decisions must be quickly computable both to make the process more efficient from a customer perspective and to avoid the state of the system changing significantly during the course of the computation.  I consider that the small loss of accuracy from using an approximate method is unlikely to significantly affect the performance of the allocation algorithm, and the consequences of an occasional sub-optimal allocation are of less concern than the alternative risks.
+
+\subsection{Conflict-sensitive ETA}
+
+\subsection{Capacity-sensitive ETA}
+
+\section{dddd}
+
+\chapter{Simulation of Allocation Algorithms}
+\label{algsimchapter}
+
+\chapter{Evaluation of Allocation Algorithms}
+\label{algtestchapter}
 
 \bibliography{Resources}
 

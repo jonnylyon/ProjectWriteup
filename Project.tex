@@ -766,7 +766,7 @@ The only change necessary in the Allocator component related to the fact that a 
 
 \subsection{Simulation Configuration}
 
-The first change necessary in the Simulation Configuration component was to allow simulation configuration files to specify the park floor of each car.  This was implemented by adding a ‘parkFloor’ attribute to the `Car' tag in the XML config files, the value of which is passed to the corresponding car at the start of the simulation.
+The first change necessary in the Simulation Configuration component was to allow simulation configuration files to specify the park floor of each car.  This was implemented by adding a `parkFloor' attribute to the `Car' tag in the XML config files, the value of which is passed to the corresponding car at the start of the simulation.
 
 The second change was to add `TCOS' as an option for the car type, so that the user could select to use TCOS cars in the simulation.
 
@@ -808,7 +808,8 @@ The only change to the Allocator component was for Allocators to handle call all
 
 In this chapter, I will discuss a number of allocation algorithms that I have developed or adapted for use in the TCOS case.  In Chapters \ref{algsimchapter} and \ref{algtestchapter} I will describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
 
-\section{Estimated Time of Arrival (ETA)}
+\section{Estimated Time of Arrival Allocation (ETA)}
+\label{algETAdescription}
 
 The Estimated Time of Arrival (ETA) algorithm is an existing algorithm for traditional elevator systems which has been widely studied in the literature \citep{Rong2003, Nikovski2003} and performed well in simulations \citep{Rong2003}.  The algorithm happens to work in such a way that its concepts can be adapted for use in the TCOS case.  After briefly describing ETA in its original form, I will discuss three ways in which I have adapted it for TCOS systems.
 
@@ -840,8 +841,7 @@ P		SP		S		/
 
 The simplest method of adapting ETA for TCOS systems is simply to apply the basic cost estimation function to each car in the system ignoring the interactions between two cars in the same shaft.  The method of calculating the approximate cost is as follows:
 
-Assume the following given time parameters (all in seconds):
-
+Assume the following given time parameters (all in seconds):\\*
 \begin{tabularx}{\linewidth}{l X}
 	$Start$		& The time taken for a car to start moving from loading (including closing doors, additional time required for acceleration, etc.) \\
 	$Stop$		& The time taken for a car to stop moving and start loading (including opening doors, additional time required for deceleration, etc.) \\
@@ -858,13 +858,103 @@ where $c$ is the car, $h$ is the new hall call to be allocated, $G(c)$ is the se
 The total estimated cost of allocating call $h$ to car $c$ is as follows:
 \[ Cost(c, h) = SDF(c, h) + EWT(h, c, G(c) \cup \left\{ h \right\}) \]
 
+The cars are all ranked by their respective values of the estimated cost function.  If the most preferred car rejects the allocation (see the notes on option 4 in Chapter \ref{teschapter} for why this might happen) then the second most preferred car will be attempted, and so on.
+
 Estimated waiting times can be calculated en masse by doing a rough simulation of the behaviour of the elevator using the six time parameters above and noting the boarding times of each group.  It would be possible to perform this simulation more exactly by using the simulation methods employed by my own TCOS Elevator Simulator but this is computationally expensive and in real world applications allocation decisions must be quickly computable both to make the process more efficient from a customer perspective and to avoid the state of the system changing significantly during the course of the computation.  I consider that the small loss of accuracy from using an approximate method is unlikely to significantly affect the performance of the allocation algorithm, and the consequences of an occasional sub-optimal allocation are of less concern than the alternative risks.
 
 \subsection{Conflict-sensitive ETA}
+\label{algETAconflict}
 
-\subsection{Capacity-sensitive ETA}
+An obvious flaw with the na\"{i}ve algorithm is that is does not account for the delay caused by two cars in the same shaft having conflicting movements.  In order to resolve this, I have designed a simple method of predicting the cost caused by conflicts.  Again, I have chosen this method so as to minimize the computational cost for the same reasons as discussed with the na\"{i}ve algorithm.  The general method is the same as described above, but the EWT must now take into account the behaviour of both cars, and their interactions, and the SDF must take into account the delay caused to passengers in the other car ($d$) as well as those in the allocation car ($c$).
 
-\section{dddd}
+In order to calculate the estimated waiting times of all groups in $G(c)$ and $G(d)$ we firstly work out an overlap region which is the range of floors that both $c$ and $d$ must visit in order to serve their respective calls.  We perform separate rough simulations of the behaviour of $c$ and $d$ as described for the na\"{i}ve algorithm but we take note of the times at which the car enters the overlap region and when it turns around to leave the region again (at which point the region becomes available to the other car).  If there is no overlap region (i.e. the calls in $G(c)$ and $G(d)$ relate to disjoint sets of floors) then no entries or reversals are recorded.  After completing the simulations we retrospectively analyse the times spent in the overlap region.  When two cars attempt to use the overlap region at the same time, it is assumed that the first car to arrive gets priority and that the second car must wait until the first has turned around before entering.  Therefore, the delay caused to the second car by waiting (easily calculated by taking the second car's entry time from the first car's reversal time) is added to all of its subsequent times.  As with the na\"{i}ve algorithm, we must calculate these estimated waiting times twice -- once including and once excluding the new hall call allocation -- in order to determine the SDF.
+
+This method makes many assumptions about the behaviour of the cars, and in some cases has the potential to provide quite bad estimations (a small error in calculating times could have a significant propagation effect if it means that the order in which two cars approach the overlap region is predicted incorrectly) but it is expected to add value to the ETA method nonetheless.
+
+\subsection{Load-sensitive ETA}
+
+Another factor that can be considered in ETA allocation algorithms is the question of what happens if an allocation results in the capacity of the car being exceeded at some point.  As discussed previously, I have a simplification assumption that, should a passenger group be allocated to a car that cannot accommodate it when the car arrives, the passenger group will wait for the same car to go away and come back.  Since this is likely to come with great time costs for affected passenger groups, it is imperative that allocation algorithms do not result in over-allocation where possible.  I have therefore designed a variant of ETA whereby a high penalty cost is applied every time a passenger group cannot be accommodated by the car to which they have been allocated.  The penalty cost is a parameter that should be set equivalent to a very high number of seconds, so as to discourage these allocations.  It should be noted that an allocation might cause a later group not to be accommodated, even if the passenger group under allocation can be accommodated itself.  If an allocation results in 2 passenger groups being affected in this way, then the penalty cost will be applied twice, and so on for greater numbers.  The SDF is altered accordingly.  Assuming a high penalty cost value is chosen, this method has the effect of prioritising firstly the allocation that results in the fewest capacity-related problems, and resolving `ties' by minimising the original EWT costs described previously.
+
+\section{Estimated Time to Destination Allocation (ETD)}
+\label{algETDdescription}
+
+The ETD algorithm is very similar to ETA, but with the difference that it attempts to minimise the average \textit{system} time (or squared system time) rather than the waiting time.  Usage of ETD in traditional elevator systems is hampered (to a greater extent than ETA) by the lack of information about passenger group destinations until they have boarded the car and pressed a button.  I expect that since the system with which we are concerned includes Destination Control we can make very effective use of this method without needing to speculate about passenger destinations.
+
+The comments made about ETA in section \ref{algETAdescription} also apply to ETD, as do the variant adaptation methods described (na\"{i}ve, conflict-sensitive and load-sensitive).  I will briefly discuss the way in which these adaptations can be analogously applied to ETD.
+
+\subsection{Na\"{i}ve ETD}
+
+The six parameters described previously all still apply for ETD: $Start$, $Stop$, $Travel$, $Reverse$, $Unload$, $Load$.  The SDF and Cost methods are adapted as follows:
+
+\[ SDF(c, h) = \sum\limits_{g \in G(c)} (EST(g, c, G(c) \cup \left\{ h \right\}) - EST(g, c, G(c)))\]
+\[ Cost(c, h) = SDF(c, h) + EST(h, c, G(c) \cup \left\{ h \right\}) \]
+where $c$, $g$, $h$ and $G(c)$ are equivalent to the same variables in ETA and $EST(g,c,G(c))$ is a method calculates the expected system time (from pressing the call button to exiting a car at the destination floor) of passenger group $g$ travelling in car $c$ with calls $G(c)$.
+
+The rough simulation is performed in the same manner as with na\"{i}ve ETA.
+
+\subsection{Conflict-sensitive ETD}
+
+Conflict-sensitive ETD is completely analogous to Conflict-sensitive ETA.
+
+\subsection{Load-sensitive ETD}
+
+Again, Load-sensitive ETD is analogous to Load-sensitive ETA, but note that the penalty costs continue to be applied based on capacity at the time of loading rather than the time of alighting.  For the sake of a rough EST estimation, passenger groups are taken to travel in the car at the first `opportunity' irrespective of current load.  The penalty is partially intended to account for the amount of additional time that the group will have to wait for the car to serve other calls and then return and pick them up the next time.
+
+\section{Minimal Overlapping Allocation (MOA)}
+
+I have developed this simple allocation policy which attempts to minimise the amount of time lost by one car having to wait for the other car.  It does this by attempting to minimise the sizes of the overlap regions (as described in section \ref{algETAconflict}) throughout the system.  In this algorithm, the cost of allocating to a car $c$ which shares a shaft with car $d$ is the size of the extension caused to the existing overlap region between $c$ and $d$ (if any).  That is:
+
+\[ Cost(c, d, h) = Overlap(c, d, G(c) \cup \left\{ h \right\}, G(d)) - Overlap(c, d, G(c), G(d)) \]
+
+where $h$ is the hall call to be allocated, $G(c)$ is the set of calls currently allocated to $c$ and $Overlap(c, d, G(c), G(d))$ is the size of the overlap region between $c$ and $d$ considering the current locations and park floors of $c$ and $d$ and the calls in $G(c)$ and $G(d)$ respectively.
+
+This algorithm ignores a lot of information that is available such as capacity, group sizes, etc. and due to its effective na\"{i}vety I expect that it will give inferior performance to the ETA and ETD algorithms presented in sections \ref{algETAdescription} and \ref{algETDdescription}.  However, it is considerably less computationally expensive than all of the variations of ETA and ETD.  Due to its attempt to minimise time wasted during car movement conflicts, it may demonstrate competition with the na\"{i}ve ETA and ETD variants.
+
+\section{Fixed TCOS Zoning Allocation (FZA)}
+
+Again, I have developed this algorithm as an attempt to minimise the time wasted by cars within the same shaft having to wait for each other.  In fact, this algorithm eliminates conflicts altogether by setting split points for each shaft such that the lower car can only serve floors below the split point and the upper car can only serve floors above the split point.  This fairly obviously restricts the flexibility of the system, but with enough shafts and appropriately distributed split points it may turn out to be worth the computational simplification, at least for certain traffic profiles.  For a 10-floor system with 5 shafts it might be appropriate to set the split points as follows:
+
+\begin{tabular}{l | l | l | l}
+	Shaft & Split point & Range of lower car & Range of upper car \\
+	\hline
+	1 & 6.5  & -1 to 6  & 7 to 9 \\
+	2 & 4.5  & -1 to 4  & 5 to 9 \\
+	3 & 4.5  & -1 to 4  & 5 to 9 \\
+	4 & 2.5  & -1 to 2  & 3 to 9 \\
+	5 & -0.5 & -1 to -1 & 0 to 9
+\end{tabular}
+
+Note that in this example, the 10 floors are numbered 0 to 9.  Floor -1 is the garage floor, to and from which passengers cannot travel.
+
+A passenger group wishing to travel from floor 4 to floor 6 can be allocated to one of three cars: The lower car in shaft 1, or the upper car in either shaft 4 or shaft 5.  The preference, for most efficient operation, would be to choose from those options the car with the smallest range of floors available to it, in this case the lower car in shaft 1.  Note that, in order to allow travel between floor 0 and floor 9, at least one shaft (in this example shaft 5) must be configured so that the lower car is parked at the garage floor and considered out of use.  If this algorithm is chosen for permanent operation, this shaft could be replaced with a traditional shaft, but retaining it as a TCOS shaft would allow other algorithms to be used at different times depending on traffic profiles, etc.
+
+The benefits of this algorithm come from the fact that it preserves a status across the group of shafts whereby for each call that comes in, at least one car is guaranteed to be able to serve it without conflicting with another car.  The other algorithms that I have described in this Chapter all have the potential to work themselves into a state whereby, for example, the upper cars are all busy serving calls in the lower half of the building while the lower cars are all trapped, which reduces the system's capacity to cope with new calls in general, and particularly in the upper half of the building.  While the ETA and ETD algorithms use intelligence based on serving calls already in the system, none of them consider potential future calls in their decision making.  While this algorithm is not really 'intelligent' as such, it is designed to maintain operability for future calls as well as existing ones.  Machine learning techniques could be used to determine the optimal distribution of split points, and an extension of the algorithm would allow the the split points to be dynamically distributed.
+
+\section{Summary of Allocation Algorithms to Evaluate}
+
+Going forward, I have chosen to evaluate all permutations of the ETA and ETD variants described above, as well as the MOA and FZA algorithms.  In order to explore the effect of different split point distributions in the FZA algorithms I will test it in three different variations - one in which the split points are distributed roughly evenly between the top and bottom floors, one where more shafts are given split points nearer the middle of the shaft than those with split points towards the top or bottom, and a third case where the majority of shafts have split points towards the top and bottom of the shaft and only a few have them near the middle.  The following table lists all of the algorithm variants that will be tested:\\*
+\begin{tabularx}{\linewidth}{l X}
+	ETA-n		& Na\"{i}ve ETA optimising based on average waiting times. \\
+	ETA-ns		& Na\"{i}ve ETA optimising based on average squared waiting times. \\
+	ETA-nl		& Na\"{i}ve Load-sensitive ETA optimising based on average waiting times. \\
+	ETA-nls		& Na\"{i}ve Load-sensitive ETA optimising based on average squared waiting times. \\
+	ETA-c		& Conflict-sensitive ETA optimising based on average waiting times. \\
+	ETA-cs		& Conflict-sensitive ETA optimising based on average squared waiting times. \\
+	ETA-cl		& Conflict- and Load-sensitive ETA optimising based on average waiting times. \\
+	ETA-cls		& Conflict- and Load-sensitive ETA optimising based on average squared waiting times.\\
+	ETD-n		& Na\"{i}ve ETD optimising based on average times to destination. \\
+	ETD-ns		& Na\"{i}ve ETD optimising based on average squared times to destination. \\
+	ETD-nl		& Na\"{i}ve Load-sensitive ETD optimising based on average times to destination. \\
+	ETD-nls		& Na\"{i}ve Load-sensitive ETD optimising based on average squared times to destination. \\
+	ETD-c		& Conflict-sensitive ETD optimising based on average times to destination. \\
+	ETD-cs		& Conflict-sensitive ETD optimising based on average squared times to destination. \\
+	ETD-cl		& Conflict- and Load-sensitive ETD optimising based on average times to destination. \\
+	ETD-cls		& Conflict- and Load-sensitive ETD optimising based on average squared times to destination. \\
+	MOA			& Minimal Overlapping Allocation. \\
+	FZA-u		& FZA with split points roughly uniformly distributed. \\
+	FZA-c		& FZA with split point positions biased towards the centre of the shaft. \\
+	FZA-e		& FZA with split point positions biased towards the extremes (top and bottom) of the shaft.
+\end{tabularx}
 
 \chapter{Simulation of Allocation Algorithms}
 \label{algsimchapter}

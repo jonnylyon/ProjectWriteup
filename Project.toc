@@ -52,22 +52,28 @@
 \contentsline {subsection}{\numberline {4.6.2}Allocator Component}{40}{subsection.4.6.2}
 \contentsline {part}{\numberline {IV}Algorithms for TCOS Elevator Systems}{41}{part.4}
 \contentsline {chapter}{\numberline {5}Discussion of Allocation Algorithms}{42}{chapter.5}
-\contentsline {section}{\numberline {5.1}Estimated Time of Arrival (ETA)}{42}{section.5.1}
+\contentsline {section}{\numberline {5.1}Estimated Time of Arrival Allocation (ETA)}{42}{section.5.1}
 \contentsline {subsection}{\numberline {5.1.1}Na\"{i}ve ETA}{42}{subsection.5.1.1}
 \contentsline {subsection}{\numberline {5.1.2}Conflict-sensitive ETA}{43}{subsection.5.1.2}
-\contentsline {subsection}{\numberline {5.1.3}Capacity-sensitive ETA}{43}{subsection.5.1.3}
-\contentsline {section}{\numberline {5.2}dddd}{43}{section.5.2}
-\contentsline {chapter}{\numberline {6}Simulation of Allocation Algorithms}{44}{chapter.6}
-\contentsline {chapter}{\numberline {7}Evaluation of Allocation Algorithms}{45}{chapter.7}
-\contentsline {part}{\numberline {V}Appendices}{47}{part.5}
-\contentsline {chapter}{\numberline {A}Materials referred to in Chapter \ref {ceschapter}}{48}{appendix.A}
-\contentsline {section}{\numberline {A.1}XML Materials}{48}{section.A.1}
-\contentsline {subsection}{\numberline {A.1.1}Sample Passenger Arrival Schedule file}{48}{subsection.A.1.1}
-\contentsline {subsection}{\numberline {A.1.2}Sample Simulation Configuration file}{49}{subsection.A.1.2}
-\contentsline {section}{\numberline {A.2}Validation Materials}{49}{section.A.2}
-\contentsline {subsection}{\numberline {A.2.1}Passenger Arrival Schedule}{49}{subsection.A.2.1}
-\contentsline {subsection}{\numberline {A.2.2}Trace Table}{50}{subsection.A.2.2}
-\contentsline {chapter}{\numberline {B}Materials referred to in Chapter \ref {teschapter}}{53}{appendix.B}
-\contentsline {section}{\numberline {B.1}Validation Materials}{53}{section.B.1}
-\contentsline {subsection}{\numberline {B.1.1}Passenger Arrival Schedule}{53}{subsection.B.1.1}
-\contentsline {subsection}{\numberline {B.1.2}Trace Table}{54}{subsection.B.1.2}
+\contentsline {subsection}{\numberline {5.1.3}Load-sensitive ETA}{44}{subsection.5.1.3}
+\contentsline {section}{\numberline {5.2}Estimated Time to Destination Allocation (ETD)}{44}{section.5.2}
+\contentsline {subsection}{\numberline {5.2.1}Na\"{i}ve ETD}{45}{subsection.5.2.1}
+\contentsline {subsection}{\numberline {5.2.2}Conflict-sensitive ETD}{45}{subsection.5.2.2}
+\contentsline {subsection}{\numberline {5.2.3}Load-sensitive ETD}{45}{subsection.5.2.3}
+\contentsline {section}{\numberline {5.3}Minimal Overlapping Allocation (MOA)}{45}{section.5.3}
+\contentsline {section}{\numberline {5.4}Fixed TCOS Zoning Allocation (FZA)}{46}{section.5.4}
+\contentsline {section}{\numberline {5.5}Summary of Allocation Algorithms to Evaluate}{47}{section.5.5}
+\contentsline {chapter}{\numberline {6}Simulation of Allocation Algorithms}{48}{chapter.6}
+\contentsline {chapter}{\numberline {7}Evaluation of Allocation Algorithms}{49}{chapter.7}
+\contentsline {part}{\numberline {V}Appendices}{51}{part.5}
+\contentsline {chapter}{\numberline {A}Materials referred to in Chapter \ref {ceschapter}}{52}{appendix.A}
+\contentsline {section}{\numberline {A.1}XML Materials}{52}{section.A.1}
+\contentsline {subsection}{\numberline {A.1.1}Sample Passenger Arrival Schedule file}{52}{subsection.A.1.1}
+\contentsline {subsection}{\numberline {A.1.2}Sample Simulation Configuration file}{53}{subsection.A.1.2}
+\contentsline {section}{\numberline {A.2}Validation Materials}{53}{section.A.2}
+\contentsline {subsection}{\numberline {A.2.1}Passenger Arrival Schedule}{53}{subsection.A.2.1}
+\contentsline {subsection}{\numberline {A.2.2}Trace Table}{54}{subsection.A.2.2}
+\contentsline {chapter}{\numberline {B}Materials referred to in Chapter \ref {teschapter}}{57}{appendix.B}
+\contentsline {section}{\numberline {B.1}Validation Materials}{57}{section.B.1}
+\contentsline {subsection}{\numberline {B.1.1}Passenger Arrival Schedule}{57}{subsection.B.1.1}
+\contentsline {subsection}{\numberline {B.1.2}Trace Table}{58}{subsection.B.1.2}

@@ -17,11 +17,11 @@
 \author{Jonathan Lyon}
 \title{Algorithms for Two-Cars-in-One-Shaft Elevator Control}
 \date{6th May 2014}
-\supervisor{Alan Frisch}
+\supervisor{Dr Alan M Frisch}
 \BEng
 \wordcount{Word Count}
-\dedication{Dedicating text stuff}
-\acknowledgements{Acknowledging stuff}
+% \dedication{Dedicating text stuff}
+\acknowledgements{I would like to thank my supervisor, Dr Alan Frisch, for his helpful and encouraging advice and guidance during the course of this project, as well as my family, housemates and friends for their support.}
 \abstract{Abstract to go here}
 
 \def\rot{\rotatebox}
@@ -33,7 +33,17 @@
 
 \chapter{Introduction}
 
+\section{Introduction}
+
 Introduction will be going in here.
+
+\section{Outline of Report}
+
+The remainder of this report is structure in three parts.  An initial review of algorithms available in the existing literature is followed by the development of a simulation tool for testing algorithms for TCOS systems.  The final part presents and evaluates the performance of a number of allocation algorithms that can be used for TCOS systems, some of which are adapted from algorithms for traditional systems, and others of which are completely original.
+
+\section{Statement of Ethics}
+
+This project does not raise any ethical concerns.  All experimentation is performed using a simulator and no human participation is involved.
 
 \part{Literature Review}
 
@@ -387,6 +397,7 @@ The Stopping state applies when the car is moving, has reached a decision point,
 \[ \text{and } T=\frac{U}{D} \text{ from equation \ref{motioneq1}.} \]
 
 \subsection{Allocator Component}
+\label{coresimallocatordescription}
 
 The Allocator component in the Core Elevator Simulator consists of an Interface class, named IAllocator, defining the methods that an Allocator implemented by the user must include.  In fact, the IAllocator interface is very simple and contains just one method which is called by the main control loop when a new PassengerGroup arrival is taken from the agenda:
 
@@ -805,8 +816,9 @@ The only change to the Allocator component was for Allocators to handle call all
 \part{Algorithms for TCOS Elevator Systems}
 
 \chapter{Discussion of Allocation Algorithms}
+\label{algdiscussion}
 
-In this chapter, I will discuss a number of allocation algorithms that I have developed or adapted for use in the TCOS case.  In Chapters \ref{algsimchapter} and \ref{algtestchapter} I will describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
+In this chapter, I will discuss a number of allocation algorithms that I have developed or adapted for use in the TCOS case.  In Chapters \ref{algsimulation} and \ref{algevaluation} I will describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
 
 \section{Estimated Time of Arrival Allocation (ETA)}
 \label{algETAdescription}
@@ -820,22 +832,22 @@ A simple modification to ETA allows allocation costs to be estimated based on sq
 \citet{Rong2003} present a reallocation variant of ETA, which allows calls to be retrospectively reassigned after the initial assignment, but since this is not compatible with Destination Control systems I will not describe it here.  They also describe methods of predicting passenger destinations in systems without Destination Control, but since Destination Control gives us full knowledge of the intentions of passengers as soon as they have made hall calls there is no need for us to consider these methods.
 
 ETA
-P		SP		S		/
-15		16		16		17
-731		830		926		1077
-68		71		69		71
-6967	7373	6925	7376
-311		291		280		299
-429		372		357		367
+P		SP		S		/		Basic
+15		16		16		17		17
+731		830		926		1077	1147
+68		71		69		71		71
+6967	7373	6925	7376	7433
+311		291		280		299		297
+429		372		357		367		408
 
 ETD
-P		SP		S		/
-34		33		?		?
-2198	2050			
-68		69				
-6303	6115			
-249		221				
-274		259				
+P		SP		S		/		Basic
+34		33		?		?		34
+2198	2050					2265
+68		69						68
+6303	6115					6183
+249		221						201
+274		259						271
 
 \subsection{Na\"{i}ve ETA}
 
@@ -908,7 +920,9 @@ I have developed this simple allocation policy which attempts to minimise the am
 
 where $h$ is the hall call to be allocated, $G(c)$ is the set of calls currently allocated to $c$ and $Overlap(c, d, G(c), G(d))$ is the size of the overlap region between $c$ and $d$ considering the current locations and park floors of $c$ and $d$ and the calls in $G(c)$ and $G(d)$ respectively.
 
-This algorithm ignores a lot of information that is available such as capacity, group sizes, etc. and due to its effective na\"{i}vety I expect that it will give inferior performance to the ETA and ETD algorithms presented in sections \ref{algETAdescription} and \ref{algETDdescription}.  However, it is considerably less computationally expensive than all of the variations of ETA and ETD.  Due to its attempt to minimise time wasted during car movement conflicts, it may demonstrate competition with the na\"{i}ve ETA and ETD variants.
+If two or more cars tie on the cost function, the tie will be resolved by calculating the costs of na\"{i}ve ETA allocation to those cars (not Conflict- or Load-sensitive).
+
+Although this algorithm primarily minimises the sizes of overlap regions, the use of ETA to resolve ties in some respects means that it can be considered a constrained form of ETA.  It is hoped that this algorithm will give many of the benefits of Conflict-sensitive ETA while remaining considerably less computationally expensive than Conflict-sensitive ETA itself since fewer ETA cost calculations will be required (required only for cars involved in ties, rather than for every car in the building) and all of the ETA calculations are of the simplest na\"{i}ve variant which is in itself less costly than Conflict-sensitive cost calculations.
 
 \section{Fixed TCOS Zoning Allocation (FZA)}
 
@@ -931,6 +945,7 @@ A passenger group wishing to travel from floor 4 to floor 6 can be allocated to 
 The benefits of this algorithm come from the fact that it preserves a status across the group of shafts whereby for each call that comes in, at least one car is guaranteed to be able to serve it without conflicting with another car.  The other algorithms that I have described in this Chapter all have the potential to work themselves into a state whereby, for example, the upper cars are all busy serving calls in the lower half of the building while the lower cars are all trapped, which reduces the system's capacity to cope with new calls in general, and particularly in the upper half of the building.  While the ETA and ETD algorithms use intelligence based on serving calls already in the system, none of them consider potential future calls in their decision making.  While this algorithm is not really 'intelligent' as such, it is designed to maintain operability for future calls as well as existing ones.  Machine learning techniques could be used to determine the optimal distribution of split points, and an extension of the algorithm would allow the the split points to be dynamically distributed.
 
 \section{Summary of Allocation Algorithms to Evaluate}
+\label{algsummary}
 
 Going forward, I have chosen to evaluate all permutations of the ETA and ETD variants described above, as well as the MOA and FZA algorithms.  In order to explore the effect of different split point distributions in the FZA algorithms I will test it in three different variations - one in which the split points are distributed roughly evenly between the top and bottom floors, one where more shafts are given split points nearer the middle of the shaft than those with split points towards the top or bottom, and a third case where the majority of shafts have split points towards the top and bottom of the shaft and only a few have them near the middle.  The following table lists all of the algorithm variants that will be tested:\\*
 \begin{tabularx}{\linewidth}{l X}
@@ -957,10 +972,89 @@ Going forward, I have chosen to evaluate all permutations of the ETA and ETD var
 \end{tabularx}
 
 \chapter{Simulation of Allocation Algorithms}
-\label{algsimchapter}
+\label{algsimulation}
+
+In this chapter I will describe the Allocators added to the TCOS Elevator Simulator in order to simulate the behaviour of a system with each of the allocation algorithms described in Chapter \ref{algdiscussion}.  I will then describe the general process used to verify the correct behaviour of the new Allocators.
+
+\section{Implementation}
+
+The general method for adding an Allocator to the simulator is described in section \ref{coresimallocatordescription}.  Here I will only discuss elements specific to each Allocator.
+
+\subsection{ETA and ETD}
+
+Due to the similarities and common code elements of the ETA and ETD algorithm variants, I decided to make a single Allocator class to handle all of the variants.  The constructor of this Allocator takes four parameters which specify ETA vs ETD, Conflict-sensitivity, power to which loss function is to be raised (i.e. average waiting time vs average \textit{squared} waiting time) and Load-sensitivity respectively.  Since the TCOS Elevator Simulator design does not cater for users to specify Allocator parameters in the configuration file, the AllocatorType enumeration has separate constants for each of the permutations and the mapping method puts the appropriate parameters into the Allocator's constructor.
+
+The allocator method retrieves a list of all cars in the building, and orders these cars by their cost of allocation, which is calculated by a CalculateCost(car, group) method, where \textit{car} is the car in question ($c$) and \textit{group} is the group to be allocated ($h$).
+
+Another method is defined, named PerformCarRun(calls, car, overlap), which returns a data structure containing all of the cost parameters (including the overlap region entry/reverse times) of the \textit{car} given the list of \textit{calls} and the calculated \textit{overlap} region.
+
+The CalculateCost(car, group) method calculates the original waiting times for the calls currently allocated to $c$, ($G(c)$) by calling PerformCarRun($G(c)$, $c$, $Overlap(c,d,G(c),G(d))$), $Overlap(c,d,G(c),G(d))$ is the overlap region between $c$ and $d$ given the calls in $G(c)$ and $G(d)$.  It then calculates the waiting times including $h$ by calling PerformCarRun($G(c) \cup \left\{ h \right\}$, $c$, $Overlap(c,d,G(c) \cup \left\{ h \right\},G(d))$).  For the Conflict-\textit{insensitive} case the results of these two method calls are sufficient to calculate the cost.
+
+For the Conflict-sensitive case, CalculateCost(car, group) then goes on to get the values of PerformCarRun($G(d)$, $d$, $Overlap(c,d,G(c),G(d))$) (original waiting times for car $d$) and PerformCarRun($G(d)$, $d$, $Overlap(c,d,G(c) \cup \left\{ h \right\},G(d))$) (waiting times for car $d$ after $h$ has been assigned to $c$).  A ReconcileCarRuns(result1, result2) is called firstly with the results of car $c$ and $d$ \textit{before} the allocation of $h$ to $c$ and secondly with the results of car $c$ and $d$ \textit{after} the allocation of $h$ to $c$.  This method returns the the overall waiting times when conflicts between $c$ and $d$ are taken into account (according to the method described in \ref{algETAconflict}), and the two results are used to calculate the cost.
+
+The Allocator allocates the call to the most preferable car according to the cost of allocation.
+
+\subsection{MOA}
+
+The Allocator for the MOA algorithm is extremely simple.  The constructor for the MOA Allocator instantiates a na\"{i}ve ETA object, which is stored for later use.  The size of the overlap zone between a car ($c$) and the other car in the same shaft ($d$) is calculated both including and excluding an allocation of the new call $h$ to $c$.  The MOA cost of allocation to car $c$ is equal to the difference between these two sizes.  The cars are sorted primarily by the MOA cost and secondly by the CalculateCost() function in the ETA object.
+
+\subsection{FZA}
+
+FZA, like ETA/ETD, is implemented as a single Allocator class where the parameter (distribution of split points) is passed into the constructor.
+
+This Allocator works out a list including every car that can serve both the origin and destination of the new hall call without leaving its fixed zone (the qualifying cars).  It then orders this list by the size of the fixed zones of each car.  Preference is given to qualifying car with the smallest fixed zone.
+
+\section{Validation}
+
+As part of the Core Elevator Simulator, a Manual Allocator was included which does not perform any calculation itself but asks the user to choose which car the call should be allocated to.  In order to verify the behaviour of the three new Allocators I have designed a 5-minute passenger distribution which, when run using any of the new Allocators, causes their respective key code paths to be executed.  For each algorithm, I have used the Manual Allocator and made the allocation decisions myself in the way that I expect the implemented Allocators to behave.  I have then compared my allocation decisions to those of the implemented Allocators in the same situations.  This method has allowed me to concentrate specifically on the behaviour of the new Allocator code without having to worry about the logic of the Domain Model, which has already been properly tested in Chapters \ref{ceschapter} and \ref{teschapter}.  In all cases, the implemented Allocators were found to behave as expected.
 
 \chapter{Evaluation of Allocation Algorithms}
-\label{algtestchapter}
+\label{algevaluation}
+
+\section{Simulation Scenario}
+
+\subsection{Parameters of building}
+
+In order to produce useful results, it is sensible to attempt to create a simulation scenario that is realistic.  In various commercial resources, Thyssenkrupp -- the main supplier of TCOS elevator systems -- suggest that it a single TCOS group are best suited to buildings of 50 - 200m in height \citep{ThyssenkruppFactSheet, ThyssenkruppWebsite}.  Much of the previous literature uses floor heights of around 4m in their simulations, so in order to maintain consistency I have decided to use a building 30-storey building of 120m in height (4m per floor) \citep{Brand2004, Nikovski2003, Rong2003}.
+
+The capacity of cars is generally set at around 20 people in existing literature, so I will use 20 people \citep{Rong2003, Crites1996, Siikonen1993}.
+
+\citet{Rong2003} performed experiments on a 40-floor building with traditional elevators, and present many of the parameters that they used.  In the absence of conflicting data from other sources, and given that the values that were used in their paper seem reasonable, I will use their values as follows:
+
+\begin{tabular}{l l}
+	Door opening time			& 1.6s \\
+	Door closing time			& 3.5s (including `photocell delay') \\
+	Boarding time				& 1.0s \\
+	Alighting time				& 1.0s \\
+	Maximum velocity			& 4.0ms\textsuperscript{-1} \\
+	Acceleration				& 1.0ms\textsuperscript{-2}
+\end{tabular}
+
+I have decided to use a deceleration rate of (-)1.0ms\textsuperscript{-2}, and a reversal time of 1.0s.
+
+In the traditional case, previous literature tends to use 8 shafts for a 30-storey building \citep{Siikonen1993, Nikovski2003, Brand2004}.  Since Thyssenkrupp advertise space savings of 25\% when using their TCOS installations, I will perform my simulations using 6 TCOS shafts (totalling 12 cars).
+
+\subsection{Traffic flows}
+
+I have devised 4 passenger traffic specifications for the scenario, representing up-peak, down-peak, interfloor and lunchtime traffic profiles respectively.  In order to get a reliable indication of the performance of each algorithm I will produce 3 passenger arrival schedules for each of the four traffic specifications, and test each algorithm against all 12 passenger arrival schedules.  For discussion of the results I will report the mean score of each algorithm against each of the 4 traffic specifications.  Each of the passenger arrival schedules will represent a time of one hour.
+
+In the traffic flows I will describe the traffic levels of the different types of movement as percentages of the total number of passenger arrivals.  Again, I look to previous literature to determine a reasonable total traffic rate over the building as a whole.  \citet{Siikonen1993} used a total of 20 passenger arrivals per minute in experiments on a similar 30-storey building.  \citet{Rong2003} used a total arrival rate of 35.5 per minute in their 40-storey building which, assuming a linear relationship between floors and arrivals suggests that 26 would be a reasonable number for a 30-storey building.  However, these experiments treat each passenger arrival as a single passenger, whereas in my Destination Control case I will be allowing passenger groups to contain more than one passenger.  Taking these factors into account, I have decided to use 20 passenger \textit{group} arrivals per minute, with mean passenger group sizes of 1.2 people, which is equivalent to approximately 24 individual passengers per minute.
+
+\subsubsection{Up-peak}
+
+While pure up-peak traffic would enforce the constraint that \textit{all} passengers begin their journey at floor 0, it is generally assumed that some other traffic will be present.  In their 2003 paper, \citet{Nikovski2003} use a profile whereby 80\% of traffic are travelling from floor 0 to other floors and 20\% are making journeys between the other floors (though noone is travelling \textit{to} floor 0).  However, in their later paper, they change to use 80\% having floor 0 as their origin, 10\% having floor 0 as their destination, and the remaining 10\% making journeys not involving floor 0 \citep{Brand2004}.  \citet{Rong2003} have 95\% of traffic travelling from floor 0 and the remaining 5\% travelling \textit{to} floor 0.  I will use a compromise up-peak profile of 85\% travelling from floor 0, 5\% travelling \textit{to} floor 0, and 10\% making journeys not involving floor 0.
+
+\subsubsection{Down-peak}
+
+For down-peak traffic, \citet{Brand2004} use 80\% travelling to floor 0, 10\% travelling from floor 0 and 10\% making journeys not involving floor 0 (this is the opposite of their up-peak profile from the same paper).  However, for reasons that are unclear, \citet{Rong2003} choose to use a \textit{pure} down-peak profile whereby \textit{all} passengers' journeys have the destination of floor 0.  In the interests of consistency, I will use the opposing figures from my up-peak profile: 85\% travelling to floor 0, 5\% travelling \textit{from} floor 0, and 10\% making journeys not involving floor 0.
+
+\subsubsection{Interfloor}
+
+In the previous literature, the exact parameters of interfloor traffic profiles are not explicitly discussed.  I will use an interfloor profile whereby journeys between any pair of origin and destination floors are uniformly likely.
+
+\subsubsection{Lunchtime}
+
+The lunchtime profile represents the case where most traffic is travelling either out of or into the building, via floor 0, while some interfloor traffic also exists.  \citet{Rong2003} and \citet{Siikonen1993} agree on a lunchtime traffic profile whereby 40\% of people are travelling from floor 0 to other floors, 40\% are travelling from other floors to floor 0, and the remaining 20\% are making journeys not involving floor 0.  I will also use this traffic profile for my experiments.
 
 \bibliography{Resources}
 

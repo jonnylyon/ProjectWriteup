@@ -21,7 +21,7 @@
 \BEng
 \wordcount{Word Count}
 % \dedication{Dedicating text stuff}
-\acknowledgements{I would like to thank my supervisor, Dr Alan Frisch, for his helpful and encouraging advice and guidance during the course of this project, as well as my family, housemates and friends for their support.}
+\acknowledgements{I would like to thank my supervisor, Dr Alan Frisch, for his helpful and encouraging advice and guidance during the course of this project, as well as my family, housemates and friends for their ongoing support.}
 \abstract{Abstract to go here}
 
 \def\rot{\rotatebox}
@@ -831,24 +831,6 @@ A simple modification to ETA allows allocation costs to be estimated based on sq
 
 \citet{Rong2003} present a reallocation variant of ETA, which allows calls to be retrospectively reassigned after the initial assignment, but since this is not compatible with Destination Control systems I will not describe it here.  They also describe methods of predicting passenger destinations in systems without Destination Control, but since Destination Control gives us full knowledge of the intentions of passengers as soon as they have made hall calls there is no need for us to consider these methods.
 
-ETA
-P		SP		S		/		Basic
-15		16		16		17		17
-731		830		926		1077	1147
-68		71		69		71		71
-6967	7373	6925	7376	7433
-311		291		280		299		297
-429		372		357		367		408
-
-ETD
-P		SP		S		/		Basic
-34		33		?		?		34
-2198	2050					2265
-68		69						68
-6303	6115					6183
-249		221						201
-274		259						271
-
 \subsection{Na\"{i}ve ETA}
 
 The simplest method of adapting ETA for TCOS systems is simply to apply the basic cost estimation function to each car in the system ignoring the interactions between two cars in the same shaft.  The method of calculating the approximate cost is as follows:
@@ -1040,21 +1022,216 @@ I have devised 4 passenger traffic specifications for the scenario, representing
 
 In the traffic flows I will describe the traffic levels of the different types of movement as percentages of the total number of passenger arrivals.  Again, I look to previous literature to determine a reasonable total traffic rate over the building as a whole.  \citet{Siikonen1993} used a total of 20 passenger arrivals per minute in experiments on a similar 30-storey building.  \citet{Rong2003} used a total arrival rate of 35.5 per minute in their 40-storey building which, assuming a linear relationship between floors and arrivals suggests that 26 would be a reasonable number for a 30-storey building.  However, these experiments treat each passenger arrival as a single passenger, whereas in my Destination Control case I will be allowing passenger groups to contain more than one passenger.  Taking these factors into account, I have decided to use 20 passenger \textit{group} arrivals per minute, with mean passenger group sizes of 1.2 people, which is equivalent to approximately 24 individual passengers per minute.
 
-\subsubsection{Up-peak}
+\paragraph{Up-peak}
 
 While pure up-peak traffic would enforce the constraint that \textit{all} passengers begin their journey at floor 0, it is generally assumed that some other traffic will be present.  In their 2003 paper, \citet{Nikovski2003} use a profile whereby 80\% of traffic are travelling from floor 0 to other floors and 20\% are making journeys between the other floors (though noone is travelling \textit{to} floor 0).  However, in their later paper, they change to use 80\% having floor 0 as their origin, 10\% having floor 0 as their destination, and the remaining 10\% making journeys not involving floor 0 \citep{Brand2004}.  \citet{Rong2003} have 95\% of traffic travelling from floor 0 and the remaining 5\% travelling \textit{to} floor 0.  I will use a compromise up-peak profile of 85\% travelling from floor 0, 5\% travelling \textit{to} floor 0, and 10\% making journeys not involving floor 0.
 
-\subsubsection{Down-peak}
+\paragraph{Down-peak}
 
 For down-peak traffic, \citet{Brand2004} use 80\% travelling to floor 0, 10\% travelling from floor 0 and 10\% making journeys not involving floor 0 (this is the opposite of their up-peak profile from the same paper).  However, for reasons that are unclear, \citet{Rong2003} choose to use a \textit{pure} down-peak profile whereby \textit{all} passengers' journeys have the destination of floor 0.  In the interests of consistency, I will use the opposing figures from my up-peak profile: 85\% travelling to floor 0, 5\% travelling \textit{from} floor 0, and 10\% making journeys not involving floor 0.
 
-\subsubsection{Interfloor}
+\paragraph{Interfloor}
 
 In the previous literature, the exact parameters of interfloor traffic profiles are not explicitly discussed.  I will use an interfloor profile whereby journeys between any pair of origin and destination floors are uniformly likely.
 
-\subsubsection{Lunchtime}
+\paragraph{Lunchtime}
 
 The lunchtime profile represents the case where most traffic is travelling either out of or into the building, via floor 0, while some interfloor traffic also exists.  \citet{Rong2003} and \citet{Siikonen1993} agree on a lunchtime traffic profile whereby 40\% of people are travelling from floor 0 to other floors, 40\% are travelling from other floors to floor 0, and the remaining 20\% are making journeys not involving floor 0.  I will also use this traffic profile for my experiments.
+
+\subsection{FZA Split Points}
+
+Given the building set up of 30 floors and 6 TCOS shafts, the split points used in the evaluation are distributed as follows for the three FZA variants:\\*
+\begin{tabular}{l || l | l | l || l | l | l || l | l | l}
+		& \multicolumn{3}{c||}{FZA-u} & \multicolumn{3}{c||}{FZA-c} & \multicolumn{3}{c}{FZA-e} \\
+	Shaft & Split & Lower & Upper & Split & Lower & Upper & Split & Lower & Upper \\
+	\hline
+	1	& -0.5	& -1 to -1	& 0 to 29	& -0.5	& -1 to -1	& 0 to 29	& -0.5	& -1 to -1	& 0 to 29 \\
+	2	& 5.5	& -1 to 5	& 6 to 29	& 9.5	& -1 to 9	& 10 to 29	& 3.5	& -1 to 3	& 4 to 29 \\
+	3	& 9.5	& -1 to 9	& 10 to 29	& 11.5	& -1 to 11	& 12 to 29	& 6.5	& -1 to 6	& 7 to 29 \\
+	4	& 14.5	& -1 to 14	& 15 to 29	& 14.5	& -1 to 14	& 15 to 29	& 14.5	& -1 to 14	& 15 to 29 \\
+	5	& 19.5	& -1 to 19	& 20 to 29	& 17.5	& -1 to 17	& 18 to 29	& 22.5	& -1 to 22	& 23 to 29 \\
+	6	& 23.5	& -1 to 23	& 24 to 29	& 19.5	& -1 to 19	& 20 to 29	& 25.5	& -1 to 25	& 26 to 29
+\end{tabular}
+
+\section{Results}
+
+I will present the results in a separate table for each of the 4 traffic flows, followed by a brief discussion of each.  Since three different passenger arrival schedules were tested against for each traffic flow, the values shown are the mean averages of the three tests and are rounded to two decimal places (2dp).  The evaluation criteria shown are as follows:
+\begin{itemize}
+	\item Average Waiting Time (AWT)
+	\item Average Squared Waiting Time (ASWT)
+	\item Average System Time (AST)
+	\item Average Squared System Time (ASST)
+	\item Longest Waiting Time (LWT)
+	\item Longest System Time (LST)
+\end{itemize}
+
+\subsection{Up-peak}
+
+\begin{tabular}{l | l l l l l l}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+	ETA-n & 22.95 & 2766.57 & 90.70 & 12193.42 & 318.07 & 442.61 \\
+	ETA-nl & 15.46 & 884.22 & 82.71 & 9032.91 & 201.72 & 334.23 \\
+	ETA-ns & 22.25 & 2406.07 & 88.87 & 11240.09 & 268.74 & 389.10 \\
+	ETA-nls & 14.15 & 746.63 & 82.19 & 8926.68 & 227.99 & 350.34 \\
+	ETA-c & 23.61 & 2886.73 & 91.10 & 12235.34 & 311.87 & 412.51 \\
+	ETA-cl & 15.02 & 846.69 & 82.60 & 8978.94 & 198.85 & 322.32 \\
+	ETA-cs & 22.33 & 2414.25 & 88.86 & 11186.35 & 279.03 & 389.10 \\
+	ETA-cls & 13.54 & 670.57 & 81.44 & 8724.48 & 174.11 & 318.16 \\
+	\hline
+	ETD-n & 32.83 & 1936.64 & 71.73 & 6364.71 & 177.63 & 208.59 \\
+	ETD-nl & 32.83 & 1936.64 & 71.73 & 6364.71 & 177.63 & 208.59 \\
+	ETD-ns & 32.99 & 1966.03 & 72.71 & 6434.30 & 145.91 & 199.61 \\
+	ETD-nls & 32.99 & 1966.03 & 72.71 & 6434.30 & 145.91 & 199.61 \\
+	ETD-c & 33.99 & 2109.20 & 72.86 & 6620.36 & 166.75 & 206.43 \\
+	ETD-cl & 33.99 & 2109.20 & 72.86 & 6620.36 & 166.75 & 206.43 \\
+	ETD-cs & 32.32 & 1939.38 & 72.45 & 6413.19 & 159.57 & 206.25 \\
+	ETD-cls & 32.32 & 1939.38 & 72.45 & 6413.19 & 159.57 & 206.25 \\
+	\hline
+	MOA & 37.59 & 4944.41 & 109.72 & 17633.83 & 635.58 & 696.56 \\
+	\hline
+	FZA-u & 43.43 & 3732.85 & 88.89 & 11146.36 & 568.77 & 633.00 \\
+	FZA-c & 575.77 & 1336193.32 & 642.72 & 1482316.19 & 6484.06 & 6590.06 \\
+	FZA-e & 246.26 & 246866.23 & 307.47 & 298514.05 & 4206.63 & 4271.11
+\end{tabular}
+
+\subsection{Down-peak}
+
+\begin{tabular}{l | l l l l l l}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+	ETA-n & 25.43 & 1272.46 & 70.86 & 6484.97 & 157.75 & 239.10 \\
+	ETA-nl & 25.37 & 1290.76 & 71.41 & 6629.70 & 157.75 & 244.38 \\
+	ETA-ns & 25.76 & 1302.46 & 71.48 & 6520.65 & 178.31 & 247.50 \\
+	ETA-nls & 25.73 & 1286.33 & 71.41 & 6523.68 & 171.14 & 246.74 \\
+	ETA-c & 25.78 & 1324.00 & 70.96 & 6494.18 & 156.55 & 239.10 \\
+	ETA-cl & 25.72 & 1342.30 & 71.52 & 6638.91 & 156.55 & 244.38 \\
+	ETA-cs & 25.75 & 1301.97 & 71.46 & 6518.96 & 178.31 & 247.50 \\
+	ETA-cls & 25.73 & 1286.33 & 71.41 & 6523.68 & 171.14 & 246.74 \\
+	\hline
+	ETD-n & 38.70 & 2435.81 & 76.74 & 7318.08 & 154.78 & 231.56 \\
+	ETD-nl & 38.70 & 2435.81 & 76.74 & 7318.08 & 154.78 & 231.56 \\
+	ETD-ns & 35.58 & 2118.53 & 75.01 & 7000.12 & 156.87 & 222.93 \\
+	ETD-nls & 35.58 & 2118.53 & 75.01 & 7000.12 & 156.87 & 222.93 \\
+	ETD-c & 39.17 & 2472.69 & 77.37 & 7426.74 & 157.76 & 225.78 \\
+	ETD-cl & 39.17 & 2472.69 & 77.37 & 7426.74 & 157.76 & 225.78 \\
+	ETD-cs & 35.34 & 2062.32 & 74.58 & 6879.00 & 165.67 & 213.49 \\
+	ETD-cls & 35.34 & 2062.32 & 74.58 & 6879.00 & 165.67 & 213.49 \\
+	\hline
+	MOA & 30.88 & 1664.10 & 86.22 & 9533.58 & 229.32 & 310.17 \\
+	\hline
+	FZA-u & 46.27 & 4358.40 & 88.79 & 11174.96 & 560.50 & 615.35 \\
+	FZA-c & 430.07 & 1084394.95 & 488.64 & 1143828.87 & 4895.16 & 4946.96 \\
+	FZA-e & 145.69 & 160338.38 & 196.69 & 179531.04 & 2939.28 & 2988.88
+\end{tabular}
+
+\subsection{Interfloor}
+
+\begin{tabular}{l | l l l l l l}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+	ETA-n & 33.10 & 2507.13 & 80.66 & 9408.37 & 287.33 & 376.50 \\
+	ETA-nl & 31.68 & 2296.37 & 78.60 & 8857.36 & 275.98 & 361.79 \\
+	ETA-ns & 35.34 & 2696.41 & 83.60 & 9873.45 & 259.71 & 362.03 \\
+	ETA-nls & 35.34 & 2696.41 & 83.60 & 9873.45 & 259.71 & 362.03 \\
+	ETA-c & 32.85 & 2402.32 & 79.78 & 8994.29 & 258.07 & 339.17 \\
+	ETA-cl & 31.26 & 2110.05 & 78.19 & 8589.13 & 259.41 & 334.23 \\
+	ETA-cs & 33.44 & 2524.32 & 80.81 & 9231.36 & 272.60 & 364.34 \\
+	ETA-cls & 33.44 & 2524.32 & 80.81 & 9231.36 & 272.60 & 364.34 \\
+	\hline
+	ETD-n & 44.21 & 3344.43 & 76.19 & 7614.40 & 205.53 & 257.76 \\
+	ETD-nl & 44.21 & 3344.43 & 76.19 & 7614.40 & 205.53 & 257.76 \\
+	ETD-ns & 41.12 & 2897.23 & 74.29 & 7094.14 & 225.60 & 259.31 \\
+	ETD-nls & 41.12 & 2897.23 & 74.29 & 7094.14 & 225.60 & 259.31 \\
+	ETD-c & 45.19 & 3509.57 & 77.59 & 7913.72 & 204.13 & 254.29 \\
+	ETD-cl & 45.19 & 3509.57 & 77.59 & 7913.72 & 204.13 & 254.29 \\
+	ETD-cs & 43.98 & 3306.24 & 77.45 & 7795.03 & 216.50 & 261.59 \\
+	ETD-cls & 43.98 & 3306.24 & 77.45 & 7795.03 & 216.50 & 261.59 \\
+	\hline
+	MOA & 32.54 & 1887.94 & 80.20 & 9005.07 & 243.29 & 346.36 \\
+	\hline
+	FZA-u & 59.31 & 6263.42 & 99.42 & 14158.32 & 315.08 & 391.95 \\
+	FZA-c & 133.05 & 166137.65 & 176.86 & 188773.04 & 3575.14 & 3634.49 \\
+	FZA-e & 315.69 & 648791.82 & 376.54 & 699864.54 & 4438.41 & 4505.39
+\end{tabular}
+
+\subsection{Lunchtime}
+
+\begin{tabular}{l | l l l l l l}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+	ETA-n & 25.59 & 1723.55 & 75.39 & 7855.82 & 297.68 & 384.43 \\
+	ETA-nl & 24.48 & 1558.05 & 73.62 & 7394.87 & 250.23 & 290.42 \\
+	ETA-ns & 25.20 & 1608.57 & 75.57 & 7896.16 & 232.23 & 301.38 \\
+	ETA-nls & 25.57 & 1612.14 & 75.83 & 7925.43 & 225.69 & 327.42 \\
+	ETA-c & 26.37 & 1875.05 & 77.10 & 8300.02 & 367.84 & 463.27 \\
+	ETA-cl & 25.12 & 1636.79 & 74.93 & 7684.99 & 277.75 & 306.89 \\
+	ETA-cs & 25.47 & 1687.65 & 76.35 & 8034.11 & 258.29 & 324.11 \\
+	ETA-cls & 25.08 & 1560.12 & 75.03 & 7652.91 & 232.05 & 301.19 \\
+	\hline
+	ETD-n & 36.39 & 2371.38 & 73.26 & 6865.08 & 197.00 & 256.17 \\
+	ETD-nl & 36.39 & 2371.38 & 73.26 & 6865.08 & 197.00 & 256.17 \\
+	ETD-ns & 35.34 & 2229.92 & 72.98 & 6715.45 & 179.35 & 222.04 \\
+	ETD-nls & 35.34 & 2229.92 & 72.98 & 6715.45 & 179.35 & 222.04 \\
+	ETD-c & 37.24 & 2434.71 & 73.59 & 6883.56 & 171.76 & 235.27 \\
+	ETD-cl & 37.24 & 2434.71 & 73.59 & 6883.56 & 171.76 & 235.27 \\
+	ETD-cs & 36.20 & 2358.08 & 74.05 & 6902.26 & 211.99 & 249.32 \\
+	ETD-cls & 36.20 & 2358.08 & 74.05 & 6902.26 & 211.99 & 249.32 \\
+	\hline
+	MOA & 28.98 & 1840.47 & 83.95 & 9499.11 & 265.88 & 351.08 \\
+	\hline
+	FZA-u & 46.21 & 3661.79 & 85.21 & 9856.06 & 200.01 & 283.14 \\
+	FZA-c & 410.69 & 974532.84 & 472.07 & 1059313.54 & 5212.93 & 5312.30 \\
+	FZA-e & 91.05 & 29422.11 & 142.14 & 45145.55 & 1969.91 & 2013.20
+\end{tabular}
+
+\subsection{Discussion of Results}
+
+In general, the variants of ETA and ETD provide better results than MOA and the variants of FZA.  However, MOA gave very good results for AWT and ASWT in the interfloor traffic case, giving the best ASWT results and the third best AWT results.  Although ETA outperformed MOA in lunchtime traffic, MOA gave better lunchtime results than ETD when measured by AWT and ASWT.  FZA was generally poor, with FZA-u proving to be better than FZA-e and FZA-c by every measurement.  However, in the up-peak traffic scenario FZA-u did outperform some ETA variants when measured by AST and ASST.
+
+As expected, ETA generally gave better AWT and ASWT results than ETD, while ETD outperformed ETA on AST and ASST, though there are some exceptions to this, for example in down-peak traffic where ETA was best by all measurements.  In all cases, the load-sensitive variants of ETD gave exactly the same allocations as the corresponding non-load-sensitive variants, suggesting that load-sensitivity does not add any value to ETD, while load-sensitivity tended to have a positive effect on ETA performance.  Indeed, the non-load-sensitive variants of ETA did notably poorly in up-peak traffic when measured by ASWT.
+
+In up-peak traffic, ETA performed best in its most complex form (ETA-cls), while ETD was best in its simplest form (ETA-n).  For down-peak traffic, the na\"{i}ve variants of both ETA and ETD (ETA-n, ETD-n) did better than the more complicated variants.  During interfloor traffic, ETA-cl and ETA-nl did better than the other ETA variants, suggesting that load-sensitivity was virtuous, while ETD did best as ETD-ns (na\"{i}ve squared form).  In lunchtime traffic, ETA benefitted again from load-sensitivity with ETA-nl coming out on top, while ETD-ns was again the best ETD variant.
+
+From these results we can see that conflict-sensitivity does not necessarily improve matters for ETA and ETD.  It seems that, based on these results, operators of TCOS elevator systems ought to choose between ETA and ETD depending on whether they prioritise waiting time or system time for their passengers.  MOA provides very good waiting time results for interfloor traffic, while remaining computationally less-expensive than ETA and ETD, which might make it appropriate for some installations.  If possible, it might be sensible for an operator to use MOA during interfloor traffic periods, switching as appropriate to ETA or ETD at other times.  These results do not recommend FZA as a good policy, though FZA-u is not disastrous under certain conditions.  FZA-u could be a consideration for certain customers who might wish to save cost by having one or more traditional shafts mixed with their TCOS shafts.
+
+\part{Conclusion}
+
+\chapter{Conclusion and Further Work}
+
+\section{Conclusion}
+
+In this project I have collaboratively designed and developed a simulation tool (Core Elevator Simulator) that can be used to evaluate the performance of hall call allocation algorithms in traditional elevator systems.  This has involved adapting a geographical state space with which to represent the location of cars within the shaft, as well as a behavioural one to represent the current actions of cars.  It was also necessary to consider and codify the logic used to control the immediate behaviour of an elevator.  In addition to these functional issues, the interaction between the user and the simulator have been considered and an appropriate system of configuration has been developed and implemented.  All elements of the Core Elevator Simulator have been tested, and the testing methods are discussed.
+
+I have independently extended the Core Elevator Simulator, creating an expanded tool capable of handling TCOS elevator shafts (TCOS Elevator Simulator).  Further work was required to understand the interaction between two cars sharing the same space for movement, the effect of these interactions on the control logic, and the changes required in order to adapt the control logic for the new case.  I have presented a number of potential solutions to these problems and discussed the benefits of each and the reasons for settling on the one which I have implemented.  Again, the behaviour of the TCOS Elevator Simulator has been thoroughly tested, and this has been discussed in the report.
+
+After finishing the basic TCOS Elevator Simulator, I have moved on to developing allocation algorithms for the TCOS case.  In order to evaluate the performance of these algorithms, I have implemented them by adding further allocation code to the TCOS Elevator Simulator.  These implementations have been appropriately tested.
+
+Having implemented the algorithms in the simulator, I have evaluated their performance during simulations of realistic passenger scenarios.  The parameters of the simulation have been chosen with regard to consistency with simulations used in existing literature.  The algorithms are each evaluated agains four types of traffic profile -- up-peak, down-peak, interfloor and lunchtime -- representing some of the different kinds of scenario that are typically handled by elevator groups during the course of a day.
+
+Results of these evaluations have been presented, with a number of different evaluation criteria included, and suggestions are made as to how TCOS elevator operators might best apply the different algorithms to their respective circumstances.
+
+\section{Further Work}
+
+During the course of this project, a great number of further questions have arisen that could not be investigated in the limited time available.  Here are some suggestions of further work that could build upon my own, relating to the development of the simulation tool and to the development and investigation of algorithms.
+
+\subsection{Simulation Tool}
+
+The most obvious work to be done on the simulation tool is to combine my TCOS version with the double-decker version which was built by Craig Gosnay.  After finishing our collaboration on the Core Elevator Simulator, all further development has been performed keeping in mind the potential for combining our respective extensions into one general purpose tool.  This tool could be used to evaluate the potential benefits of using elevator groups where some shafts include two cars, some use double-decker cars, and others are traditional shafts.  It is also hoped that, with some extra work, single shafts could include two double-decker cars (or one single- and one double-decker), further combining the TCOS and double-decker concepts.  Other extensions, if thought to be worth investigating from an algorithmic perspective, could consider the Many-cars-in-one-shaft (MCOS) case, or indeed cars with three or more decks.
+
+The tool currently operates using the command line only, with configuration performed in XML files.  There is no dynamic visualisation available, though the logs can be retrospectively manipulated such that elevator movements can be graphed using other tools (i.e. Microsoft Excel).  One potential extension could be to provide a retrospective visualisation tool, which interprets the logs and gives a video representation of the building with the cars' and (optionally) peoples' movements visible.
+
+More complex, but still possible, would be to extend the existing tool to have a real-time GUI (though the discrete event-based nature of the tool would make this difficult).  If a real-time GUI were provided, manual allocation decisions could be made without having to print all of the relevant information to the console.  With further (costly) extensions, pause and re-wind functionality could be added.  Users could make manual allocation decisions and then rewind to try out the effect of a different decision.
+
+\subsection{TCOS Algorithms}
+
+It would be interesting to consider the logic behind switching algorithms depending on traffic.  This could be done either based on fixed time schedules, or by analysing traffic as it happens and making a prediction as to whether or not it might be sensible to switch allocation policy.  This is more complex than it first appears, as some allocation policies rely on the assumption that the previous allocations have been made using the same policy.  Consideration would have to be given as to how one could `safely' transition from one policy to another without causing problems for the new policy.
+
+All of my algorithm work has made the assumption that there is a single lobby floor, and that it is the lowest floor (floor 0).  But what if the building extends into the basement, and morning traffic travels down from the lobby as well as up?  Furthermore, what if there are two lobby floors (e.g. a street-level entrance as well as a popular basement car park, or street-level entrances at different floors on different sides of the same building)?  A similar assumption is that people leave the building at lunchtime, but what if there is a lunchtime restaurant on an intermediate floor in the middle of the building?  This case is similar in nature to the idea of floors existing below the lobby, if one considers the traffic to the restaurant floor as being similar to traffic to a lobby floor.
+
+My experiments were all performed against one building, and this may have restricted the transferability of the results.  It would be interesting to see the performance of my algorithms when more or fewer shafts exist in the building, or when the building contains more floors.  Perhaps changing the parameters of the cars (i.e. maximum speed, acceleration, etc.) might also affect the results?
+
+Finally, it would be interesting to explore the interaction between allocation algorithms and the power consumption of an elevator group.  This would require some further domain understanding the addition  of some (probably minor) monitoring code to the simulation tool.
 
 \bibliography{Resources}
 

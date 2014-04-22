@@ -20,7 +20,7 @@
 \supervisor{Dr Alan M Frisch}
 \BEng
 \wordcount{Word Count}
-% \dedication{Dedicating text stuff}
+\dedication{}
 \acknowledgements{I would like to thank my supervisor, Dr Alan Frisch, for his helpful and encouraging advice and guidance during the course of this project, as well as my family, housemates and friends for their ongoing support.}
 \abstract{Abstract to go here}
 
@@ -39,7 +39,7 @@ Introduction will be going in here.
 
 \section{Outline of Report}
 
-The remainder of this report is structure in three parts.  An initial review of algorithms available in the existing literature is followed by the development of a simulation tool for testing algorithms for TCOS systems.  The final part presents and evaluates the performance of a number of allocation algorithms that can be used for TCOS systems, some of which are adapted from algorithms for traditional systems, and others of which are completely original.
+The remainder of this report is structured in four parts.  An initial review of algorithms available in the existing literature is followed by the development of a simulation tool for testing algorithms for TCOS systems.  The next part presents and evaluates the performance of a number of allocation algorithms that can be used for TCOS systems, some of which are adapted from algorithms for traditional systems, and others of which are completely original.  Finally, conclusions of the project are presented along with suggestions for further work.
 
 \section{Statement of Ethics}
 
@@ -47,10 +47,160 @@ This project does not raise any ethical concerns.  All experimentation is perfor
 
 \part{Literature Review}
 
-\chapter{Chapter Placeholder}
+\chapter{Literature Review}
 
-\section{Section 1 Placeholder}
-\section{Section 2 Placeholder}
+While the published academic literature contains very little information about the scheduling of two-cars-in-one-shaft elevator systems, there is much available about scheduling traditional systems in which each shaft contains one car.  This project will proceed by researching the existing literature on the scheduling of traditional elevators, which covers cases with and without destination control.
+
+\section{General Concepts}
+
+Before discussing any of the existing elevator scheduling algorithms, I will introduce some generic concepts, which are found across the literature and are generally relevant to the problem as a whole.
+
+\subsection{Destination Control}
+
+Destination Control is an approach used in modern elevator systems (usually those serving many floors) whereby passengers are required to state their destinations at the time of initially registering a call.  This allows the system to know both the origin and exact destination of each call as soon as the passenger first arrives, in contrast to traditional systems in which only the origin and direction of travel are known until the passenger boards the elevator.  This additional information allows scheduling algorithms to perform more efficiently.  \citep{Koehler2002}
+
+\subsection{Types of Passenger Call}
+
+There are two types of passenger call that are served by elevators:  \citep{Gagov2001, Bao1994}
+
+\begin{description}
+	\item[Hall Call] A call for an elevator made at one of the floors.  In systems without destination control, this will usually be an `up' hall call or a `down' hall call.  In systems with destination control, it will include the exact floor to which the passenger wishes to travel.
+	\item[Car Call] A call made from within an elevator for the elevator to stop at a certain floor (for a passenger to get off).  This type of call only occurs in systems without destination control.
+\end{description}
+
+\subsection{Traffic Types}
+
+In many elevator systems, the general flow of traffic varies (sometimes predictably) during the day.  Different traffic flows can require different strategies in order to handle them efficiently.  Some papers choose to focus on a specific type of traffic flow when developing and testing their algorithms, while some algorithms are designed to be generic.  There has been some research into designing a system that can detect the type of traffic flow and alter the scheduling strategy accordingly; this will be discussed later.  The main recognised traffic flows are as follows:  \citep{Nikovski2003, Brand2004, Rong2003, Smith2002, Collins1993Patent, Bao1994}
+
+\begin{description}
+	\item[Up-peak traffic] This traffic type is best demonstrated by considering the morning peak period of travel in an office building.  Since most people are arriving at work, the vast majority of traffic originates from the lobby (floor 0) and is destined for higher floors (though the exact destinations are not known).  In the simplified case, all traffic goes from floor 0 to another floor.  \citep{Bao1994, Brand2004, Smith2002}
+	\item[Down-peak traffic] Similarly, this is the kind of traffic that occurs at the end of an office day when the majority of passengers are travelling down the building.  At first this sounds like it is similar to the up-peak traffic type, but in a different direction.  However, it actually presents very different challenges; in this case most passengers have an unknown origin floor but a known destination floor.  In the simplified case all passengers can originate from any floor, but all will be destined for floor 0.  \citep{Bao1994, Brand2004, Smith2002}
+	\item[Interfloor traffic] In this traffic type, passengers travel from any part of the building to any other part of the building (not necessary to/from floor 0) in any direction.  \citep{Collins1993Patent}
+	\item[Lunchtime traffic] The lunchtime traffic type is a combination of the up-peak and down-peak types.  Because the lunch break is relatively short and probably overlaps, you can have the situation where passengers are going both up and down the building at once, but primarily either originating from or going to floor 0.  In the simplified case, all traffic either originates from or is destined for floor 0.  \citep{Bao1994, Brand2004, Smith2002}
+\end{description}
+
+\subsection{Types of Hall Call Allocation Policy}
+
+Broadly, there are two types of policy for allocating a car to serve a Hall Call:  \citep{Bao1994, Rong2003}
+
+\begin{description}
+	\item[Immediate Allocation] This type of allocation policy, widespread in Japan, allocates an elevator to the hall call as soon as the button has been pressed.  Optionally, passengers are informed of the allocation immediately, which typically reduces the \textit{perceived} waiting time for each passenger.  Destination control systems use immediate allocation algorithms.
+	\item[Continuous Allocation] This type of policy is more conventionally used in western countries.  The car that will serve a call is not conclusively allocated until the moment it starts slowing for the stop.  This allows for more efficient scheduling, since decisions can be changed in the light of new information that comes about between the time that the hall call is made and the time that the elevator arrives.
+\end{description}
+
+\subsection{General Constraints}
+
+There are a few constraints and assumptions that are generally accepted by the existing literature.  These are primarily driven by the expectation of passengers:  \citep{Bao1994}
+
+\begin{itemize}
+	\item If a passenger in an elevator car has requested to get off at a particular floor, the car must not pass that floor without stopping.
+	\item A passenger will not board a car that is not travelling in the direction of their destination.
+	\item A car must not change direction so long as there are passengers inside the car whose destination is in the current direction of travel.  This assumes that passengers will have registered their intents correctly either by making the correct car call (in systems without Destination Control) or hall call (with Destination Control).
+	\item If a car stops at a floor with passengers waiting to go in the direction that the car is travelling, all such passengers are permitted (and expected) to board the car, unless the car is full.  This constraint does not apply with the use of Destination Control, in which passengers will be directed to specific cars.
+\end{itemize}
+
+\subsection{Control Objectives}
+
+The definition of a `good' or `optimal' elevator scheduling algorithm is somewhat subjective.  There are a range of different measures used in the literature to compare the suitability of certain algorithms.  These include the following:  \citep{Bao1994}
+
+\begin{description}
+	\item[Average waiting time] The average time from when a passenger presses the call button to when a car arrives to pick them up.
+	\item[Average system time] The average time from when a passenger presses the call button to when they are dropped off at their destination.
+	\item[Average squared waiting time] The average squared waiting time (with waiting time defined as above).
+	\item[Maximum waiting time] The longest time for any passenger from when they press the call button to when a car arrives to pick them up.
+	\item[Percentage of people waiting for longer than $x$ seconds] The percentage of passengers who wait longer than a specified time period between pressing the call button and being picked up by a car.
+\end{description}
+
+\section{Scheduling Algorithms}
+
+The existing algorithms for scheduling traditional elevator systems can be broadly split into three groups: those that are designed specifically for down-peak traffic, those specifically for up-peak traffic, and those which are designed as general purpose algorithms that can be applied to any traffic scenario.
+
+\subsection{Down-peak Scheduling Algorithms}
+
+The literature on down-peak scheduling algorithms largely refers back to a technical report by \citet{Bao1994}.  This report was never published, but their descriptions of several algorithms form the basis of much of the later research into more efficient implementations.  This paper discusses and simulates two down-peak traffic scenarios: one with pure down-peak traffic and the other with a small amount of interfloor traffic to represent a more realistic scenario.  The authors observe that when dealing with pure down-peak traffic the problem is reduced to the following two questions:
+
+\begin{itemize}
+	\item To which floor should a car return for passengers after dropping off at the ground floor?
+	\item At which floors should the car stop to pick up more passengers during its descent?
+\end{itemize}
+
+In a continuous allocation system, the effect is that a passenger is allocated to the first car that stops at their origin floor.
+
+\subsubsection{Otis Round Robin Algorithm (OTIS) \citep{Bao1994}}
+
+This algorithm, also referred to as SECTOR in some papers \citep{Crites1996, Crites1998}, was provided by Otis and is used as the baseline test algorithm against which the other algorithms presented were measured.  The algorithm is described as follows:
+
+Divide the floors of the building into a number of contiguous zones or `sectors' of equal size.  The number of such zones should be 1 less than the total number of elevator cars.  Allocate elevator cars to the zones as the cars become free, in a round robin fashion.  The car serves all of the up calls and down calls in its allocated sector.  When it becomes free again (probably at the ground) allocate it to the next zone in the cycle.  If a car is allocated a zone which has no calls waiting, it `parks' at the top of the zone.
+
+\subsubsection{Down-peak Rate Matching Algorithm (D-RMA) \citep{Bao1994}}
+
+This algorithm considers the passenger arrival rates of the various floors in the building.  If $\lambda_i$ represents the passenger arrival rate for the $i$th floor, then $\Lambda$ is the arrival rate for the building, which is considered as the sum over $i$ of $\lambda_i$ for all floors in the building except the ground floor.  Therefore, an average car service rate can be determined as $\Lambda / m$ where $m$ is the total number of cars.  When a car becomes free, the intention is to allocate it a combination of floors such that the predicted service rate for the car between now and when it gets all of its passengers to the ground floor is met while minimising the number of floors at which the elevator must stop.  This service rate is calculated with respect to some defined parameters such as the amount of time taken to travel from one floor to the next (without stopping), the amount of time added to slow down, pick up passengers and return to `cruising speed' as well as the mean entrance time per passenger.
+
+\subsubsection{Longest Queue First Algorithm (LQF) \citep{Bao1994}}
+
+In this algorithm, when the car has dropped off passengers at floor 0, it carries any waiting upward-bound passengers to their destinations.  Following this, it chooses the floor with the longest queue of down-peak passengers and goes straight to it to take them down to the ground floor.  On its way down it stops at every floor with a downward hall call.  \citet{Bao1994} do not give any detail as to how queue lengths are estimated, but a number of other papers refer to methods of estimation based on known arrival rates, the time since the last call was made, the number of times the call button has been pressed, and so on \citep{Crites1996, Crites1998, Thangavelu1989Patent, Pepyne1997}.
+
+\subsubsection{Dynamic Load Balancing (DLB) \citep{Bao1994}}
+
+This algorithm is not fully described in their technical report, but they do summarise that the algorithm works by `dynamically equalizing the load of all cars' by `allocating a service sector [zone] to each car so as to balance a measure of passenger load' \citep{Bao1994}.  A source is given for a more detailed explanation of the algorithm, but the source is unavailable to me.
+
+\subsubsection{Highest Unanswered Floor First -- Basic (BASIC HUFF) \citep{Bao1994}}
+
+The basic version of the HUFF algorithm is very similar to the LQF algorithm described above.  The only difference is that each car chooses the \textit{highest} floor with a downward hall call, rather than the floor with the longest queue.
+
+\subsubsection{Highest Unanswered Floor First -- Advanced (HUFF) \citep{Bao1994}}
+
+The advanced version of HUFF is the first of the algorithms that \citet{Bao1994} explain in great detail.  The general idea here is that whenever a car becomes free (runs out of calls to serve) the entire state of the system is examined and an assignment of floors for all cars is produced that minimises a certain load function.  Only those floors with hall calls waiting are considered for assignment.  When the cars have been assigned a floor to serve, they go straight to it and then descend to the ground floor to drop off passengers.  However, on the way back down they pick up passengers at floors between their own assigned floors and the assigned floor of the next car down.  This means that between them the cars will serve all of the floors with downward hall calls, as long as a car is assigned to the highest such floor.
+
+The concept of \textit{covering} is used.  The system is considered `covered' if there is a downward-travelling elevator at or higher than the highest floor with a downward hall call.  If it is covered, then ensuring that the high car is assigned to the highest such floor will guarantee that every solution will end up with an elevator visiting every floor, although some may be very inefficient.  If the system is not covered, it must be ensured that one of the cars is assigned to that highest floor.
+
+For cars that are not free (i.e. those that already have calls to serve) the floor assignment is trivial: they are assigned to the floor that they currently occupy.  However, for the free cars there are a potentially large number of combinations of assignments equal to $n! / (n-r)!$ where $n$ is the number of floors with hall calls (the algorithm will only assign a car to a floor with a hall call) and $r$ is the number of free cars.  For this reason, the search space must be narrowed to exclude solutions that are unlikely to offer much value.
+
+The search space is defined as follows: if the building is not covered then one car is assigned to the highest floor with a hall call.  If there is another free car, it can be assigned to any floor with a hall call.  If there is still another one, it can also be assigned to any floor with a hall call.  Any further free cars are not assigned.  If the building is covered, then the car that is providing the coverage is assigned the highest floor with a hall call.  The next two cars can each be assigned any floor with a hall call.  Any remaining free cars, again, are not assigned.  In both of these cases, the number of possible combinations is just $n(n-1)$ where $n$ is the number of floors with hall calls.  \citet{Bao1994} described this method for an application of HUFF where there are only four cars.  It is unclear how you would scale the search space up to work with a larger group without either (a) vastly losing efficiency or (b) requiring another large search space.
+
+Finally, I will describe the load function that is used to evaluate car assignments in HUFF.  For each floor with a hall call, the time taken for the allocated car to reach the floor is calculated with respect to the same defined parameters as those used in D-RMA.  This time is added to the time since the hall call was made in order to calculate the total wait time of the passengers at that floor.  The total wait time is then squared to produce the squared wait time for that floor.  The value of the loss function for each assignment of floors is the sum of the squared wait times for all floors with downward hall calls.
+
+\citet{Bao1994} do not discuss how issues with car capacity are handled in this algorithm, or indeed in any of the algorithms that they describe.  It is assumed that car capacities are not taken into account in the decision-making processes of these algorithms, and that a car may well stop to pick up passengers that it cannot accommodate.  It is assumed in this case that the waiting passengers would register another call and be served at another opportunity.
+
+\subsubsection{Finite Inter-visit Time Minimisation (FIM) \citep{Bao1994}}
+
+The FIM algorithm is an extension of the advanced HUFF algorithm with the differences that it considers assignment of all cars, rather than just the free ones, it assigns cars to floors with upward hall calls as well as those with downward ones, and it allows cars to be assigned to more than one zone.
+
+Because of upward hall calls now also being considered, we must add another \textit{covering} concept.  This new type of covering is similar to the initial one except that it applies to upward hall calls instead of downward ones.  We now refer to the original covering concept as \textit{covered\_down} and introduce the new \textit{covered\_up}.  The state of the system satisfies \textit{covered\_up} if there is an upward-bound car at or below the lowest floor with an upward hall call.
+
+The steps used to generate solutions in the search space are presented here, taken directly from \citet{Bao1994}.
+
+\begin{enumerate}
+	\item Assign one car to the lowest floor with an upward hall call.  This car must be either currently on the way up, or stationary at the ground floor.
+	\item Any remaining cars that are either on their way up or stationary at the ground floor will be assigned to downward hall calls.
+	\item If there are one or two cars on their way up the shaft other than the one that was assigned to the upward hall call, these may each be assigned to an additional floor to the one assigned to them in step 2 (i.e. they may have two assignments).  These additional floors will be the two floors with downward hall calls that have been waiting the longest so far.
+	\item Now, consider all the cars that are currently going down and assign them each to one of the floors with a downward hall call; the only constraint is that the assigned floor must be lower than the car's current position.
+	\item If the system's current state satisfies covered\_up then the lowest floor with an upward hall call may be assigned to either the lowest car currently moving upwards or the car stationary at the ground floor which has the most passengers still to alight.
+	\item Every car currently going upwards, if it does not already have an upward hall call assigned to it, may have at most one upward call assigned to it, with the only constraint being that the location of that call is above the car's current location.
+\end{enumerate}
+
+Since each hall call can only be assigned to one car, if a car is allocated a hall call that has already been allocated to another car at an earlier step in the algorithm, the original car has that hall call removed from its assignments.
+
+The load function for FIM is the same as that for HUFF, but it has to take into account that some cars have multiple zones to visit.  \textit{Bao1994} do not explicitly specify how to determine the order in which zones are visited by the cars, but it is assumed (and seemingly sensible) that to avoid unnecessary changes of direction the cars visit upward zones in order from low to high in the building followed by downward zones in order from high to low.
+
+\subsubsection{Empty the System Algorithm (ESA) \citep{Bao1994}}
+
+ESA operates in a similar way to HUFF in that it aims to find an assignment of cars to floors in the system that minimises some load function.  However, the methods of constraining the search space and the load function differ.
+
+The search space for car assignment is defined as follows:
+
+\begin{itemize}
+	\item Upward-moving cars with car calls can only be assigned additional upward hall calls above their current locations.  Downward-moving cars with car calls can only be assigned additional downward hall calls below their current locations.
+	\item Upward-moving cars without car calls can be assigned either downward or upward hall calls, but only above their current locations.  Downward-moving cars without car calls can be assigned either downward or upward hall calls, but only below their current locations.
+	\item A stopped car without any car calls can be assigned to any floor.
+	\item Any free car must be assigned to a hall call if there are any available.
+\end{itemize}
+
+The load function for a floor allocation is calculated as the sum of the \textit{residual wait times} for each floor, where the residual wait time is the predicted time that passengers will have to wait to be served from now, not including any time that they may already have waited.
+
+\subsection{Up-peak Scheduling Algorithms}
+
+\subsection{Generic Scheduling Algorithms}
 
 \part{Elevator Simulator}
 
@@ -196,7 +346,7 @@ As previously described, the domain model component contains a conceptual model 
 	\item P3 (Third passage) -- calls that require the car to reverse twice before serving.
 \end{itemize}
 
-Figure \ref{p1p2p3} shows how hall calls are allocated to the groups P1, P2 and P3.  The car is currently stationary at floor 3, going up.  Upward hall calls from floor 3 or above can be served without reversing.  Downward hall calls require the car to reverse once (possibly having gone up first to reach it).  Upward hall calls from below floor 3 require the car to reverse, travel down and reverse again.  Car calls are allocated to the same groups, but are only placed in either P1 or P2 as they do not have an associated direction.
+\autoref{p1p2p3} shows how hall calls are allocated to the groups P1, P2 and P3.  The car is currently stationary at floor 3, going up.  Upward hall calls from floor 3 or above can be served without reversing.  Downward hall calls require the car to reverse once (possibly having gone up first to reach it).  Upward hall calls from below floor 3 require the car to reverse, travel down and reverse again.  Car calls are allocated to the same groups, but are only placed in either P1 or P2 as they do not have an associated direction.
 
 \begin{figure} [h]
 	\centering
@@ -216,7 +366,7 @@ The behaviour of cars is governed precisely by the following three rules:
 
 Since the decision was made to use a discrete event-based simulation, it was necessary to consider how the movement of the cars, which is inherently continuous, could be represented meaningfully in a discrete manner.  While developing a dynamic programming approach to elevator scheduling, Nikovski and Brand [REF] present a discretised model of the state space of an elevator car in terms of its position in the shaft, which has been adapted for use in this simulator.  If one considers the two parameters of the continuous state space to be current speed and vertical position in the shaft then, given that the car will have some pre-determined maximum speed and rates of acceleration and deceleration, it can be seen that the car will follow certain fixed paths around this state space.  
 
-Figure \ref{shaftstates} gives an example of a possible state space for an upward-travelling car, where the red dots represent the states, the green lines the transitions between states, and the blue lines the paths of deceleration from each state to its associated floor.  Each state can be thought of as a decision-point for its associated floor, at which the car decides whether to start slowing down in order to stop at the associated floor, or to carry on travelling upwards to the next decision point).  In this example, the floors are spaced evenly, but one can imagine how the states might look otherwise.  In any case, since each state lies on one of the blue deceleration paths, the parameters of a state can be determined from the floor with which it is associated, the movement speed associated with the state, and the specified rate of deceleration of the car.  A similar diagram could be drawn for a downward-moving car.
+\autoref{shaftstates} gives an example of a possible state space for an upward-travelling car, where the red dots represent the states, the green lines the transitions between states, and the blue lines the paths of deceleration from each state to its associated floor.  Each state can be thought of as a decision-point for its associated floor, at which the car decides whether to start slowing down in order to stop at the associated floor, or to carry on travelling upwards to the next decision point).  In this example, the floors are spaced evenly, but one can imagine how the states might look otherwise.  In any case, since each state lies on one of the blue deceleration paths, the parameters of a state can be determined from the floor with which it is associated, the movement speed associated with the state, and the specified rate of deceleration of the car.  A similar diagram could be drawn for a downward-moving car.
 
 \begin{figure} [h]
 	\centering
@@ -236,7 +386,7 @@ As well as the floor, speed and direction, the state of the car contains two oth
 	\item[Loading] Used during the time when passengers are boarding the car.
 	\item[DoorsClosing] Used during the time when the car is closing its doors.
 	\item[Idle] None of the above actions are currently taking place.
-	\item[Stopped] This is something of a placeholder action, in that it does not represent any particular domain concept.  However, it does hold the logic to decide which of the above actions to enter next (as shown in Figure \ref{caractions}).
+	\item[Stopped] This is something of a placeholder action, in that it does not represent any particular domain concept.  However, it does hold the logic to decide which of the above actions to enter next (as shown in \autoref{caractions}).
 \end{description}
 
 \begin{figure} [h]
@@ -280,7 +430,7 @@ As well as the floor, speed and direction, the state of the car contains two oth
 	\label{caractions}
 \end{figure}
 
-Figure \ref{caractions} demonstrates the relationship between the ten car action states.  In this diagram, solid transition edges denote immediate action changes, while dotted lines denote state changes that are made via the agenda.  For example, if the car is in the Stopped state, and determines that the next required action is to reverse, it will immediately change its state to Reversing.  Since there must then be a delay before the car can do anything else (specified by the user as, for example, 1 second), it will add an event on the agenda for 1 second later.  This agenda event will tell the car to go back into the Stopped state.  Then it might determine that the next required action is to load passengers, so it will immediately change into the Loading state.  It will then calculate the amount of time that loading will take (based on the number of passengers to load, and the user-specified loading time per passenger) and add an event onto the agenda for when the car should re-enter the Stopped state.  Putting future events onto the agenda allows the immediate control to return to the main control loop, which can (if appropriate) serve Passenger Hall Call events and/or events for other cars in the mean time.
+\autoref{caractions} demonstrates the relationship between the ten car action states.  In this diagram, solid transition edges denote immediate action changes, while dotted lines denote state changes that are made via the agenda.  For example, if the car is in the Stopped state, and determines that the next required action is to reverse, it will immediately change its state to Reversing.  Since there must then be a delay before the car can do anything else (specified by the user as, for example, 1 second), it will add an event on the agenda for 1 second later.  This agenda event will tell the car to go back into the Stopped state.  Then it might determine that the next required action is to load passengers, so it will immediately change into the Loading state.  It will then calculate the amount of time that loading will take (based on the number of passengers to load, and the user-specified loading time per passenger) and add an event onto the agenda for when the car should re-enter the Stopped state.  Putting future events onto the agenda allows the immediate control to return to the main control loop, which can (if appropriate) serve Passenger Hall Call events and/or events for other cars in the mean time.
 
 \subsubsection{Movement Mathematics}
 
@@ -327,7 +477,7 @@ Here, I will demonstrate the maths for upward movement.  The maths for downward 
 
 The Moving state applies when the car is moving, has reached a decision point, and has decided not to stop.  The parameters of the next decision point must be calculated, and there are two scenarios that must be considered.
 
-The first, and simplest, scenario is where the car will accelerate until it reaches the decision point for the next floor, then decide whether or not to start slowing for the floor.  In this case, we simply need to find the point Q at which the acceleration curve from our current state crosses the deceleration curve for the next floor (Figure \ref{movingsimp}).
+The first, and simplest, scenario is where the car will accelerate until it reaches the decision point for the next floor, then decide whether or not to start slowing for the floor.  In this case, we simply need to find the point Q at which the acceleration curve from our current state crosses the deceleration curve for the next floor (\autoref{movingsimp}).
 
 \begin{figure} [h]
 	\centering
@@ -336,7 +486,7 @@ The first, and simplest, scenario is where the car will accelerate until it reac
 	\label{movingsimp}
 \end{figure}
 
-We first find the distance from here to point $Q$, which we will call $Q_D$.  By two applications of equation \ref{motioneq2} we find that:
+We first find the distance from here to point $Q$, which we will call $Q_D$.  By two applications of \autoref{motioneq2} we find that:
 \[Q_V^2=U^2+2AQ_D \text{ (for the acceleration curve)}\]
 \[ \text{and } 0=Q_V^2-2D(S-Q_D) \text{ (for the deceleration curve).} \]
 
@@ -344,10 +494,10 @@ Note that $Q_V$ is the speed that we will have at point $Q$.  Combining these tw
 \[ Q_D=\frac{2DS-U^2}{2(A+D)} \]
 
 It is now trivial to find $V$ and $T$ as required, since
-\[ V^2=Q_V^2=U^2+2AQ_D \text{ from equation \ref{motioneq2}} \]
-\[ \text{and } T=Q_T=\frac{Q_V-U}{A} \text{ from equation \ref{motioneq1}. } \]
+\[ V^2=Q_V^2=U^2+2AQ_D \text{ from \autoref{motioneq2}} \]
+\[ \text{and } T=Q_T=\frac{Q_V-U}{A} \text{ from \autoref{motioneq1}. } \]
 
-The second scenario is invoked when we find that $Q_V$ exceeds the maximum speed $M$ that our car can travel at.  In this case we will accelerate to some point $P$ on the acceleration curve (at which $P_V=M$), then move at a constant speed of $M$ until we reach the decision point $R$, the latest point at which we can decelerate to the next floor from speed $M$ (Figure \ref{movingcomp}).
+The second scenario is invoked when we find that $Q_V$ exceeds the maximum speed $M$ that our car can travel at.  In this case we will accelerate to some point $P$ on the acceleration curve (at which $P_V=M$), then move at a constant speed of $M$ until we reach the decision point $R$, the latest point at which we can decelerate to the next floor from speed $M$ (\autoref{movingcomp}).
 
 \begin{figure} [h]
 	\centering
@@ -358,11 +508,11 @@ The second scenario is invoked when we find that $Q_V$ exceeds the maximum speed
 
 The parameters of the point $P$ on our acceleration curve are trivial to find:
 \[ P_V=M \text{ by definition,} \]
-\[ P_T=\frac{P_V-U}{A} \text{ from equation \ref{motioneq1}} \]
-\[ \text{and } P_D=UP_T+\frac{1}{2}AP_T^2 \text{ from equation \ref{motioneq3}.} \]
+\[ P_T=\frac{P_V-U}{A} \text{ from \autoref{motioneq1}} \]
+\[ \text{and } P_D=UP_T+\frac{1}{2}AP_T^2 \text{ from \autoref{motioneq3}.} \]
 
 Then, the distance from our initial point to point $R$, named $R_D$, can be found from the following equation
-\[ 0=R_V^2-2D(S-R_D) \text{ from equation \ref{motioneq2},} \]
+\[ 0=R_V^2-2D(S-R_D) \text{ from \autoref{motioneq2},} \]
 which rearranges to give
 \[ R_D = S - \frac{R_V^2}{2D} \text{.} \]
 
@@ -374,7 +524,7 @@ Note that the above logic and equations also hold for the common case where the 
 
 \paragraph{Leaving state}
 
-The Leaving state applies when the car is stopped and about to start leaving.  The parameters of the first decision point that will be encountered by the car must be calculated.  The logic and equations for the Leaving state are the same as those for the Moving state, but if the car is in the Leaving state then $U=0$.  Figure \ref{leavingsimp} and Figure \ref{leavingcomp} demonstrate these scenarios graphically.
+The Leaving state applies when the car is stopped and about to start leaving.  The parameters of the first decision point that will be encountered by the car must be calculated.  The logic and equations for the Leaving state are the same as those for the Moving state, but if the car is in the Leaving state then $U=0$.  \autoref{leavingsimp} and \autoref{leavingcomp} demonstrate these scenarios graphically.
 
 \begin{figure} [h]
 	\centering
@@ -394,7 +544,7 @@ The Leaving state applies when the car is stopped and about to start leaving.  T
 
 The Stopping state applies when the car is moving, has reached a decision point, and has decided to stop.  If the car is in the Stopping state, the maths is very simple.  The next state is reached by following the deceleration curve straight down to stopping at the floor.  Therefore,
 \[ V=0 \text{ by definition of Stopping} \]
-\[ \text{and } T=\frac{U}{D} \text{ from equation \ref{motioneq1}.} \]
+\[ \text{and } T=\frac{U}{D} \text{ from \autoref{motioneq1}.} \]
 
 \subsection{Allocator Component}
 \label{coresimallocatordescription}
@@ -801,7 +951,7 @@ The passenger arrival schedule was designed to invoke all of the code path scena
 
 When I first ran the TCOS Elevator Simulator configured as described above, the two cars in the shaft entered a deadlock scenario.  This meant that either there was a problem with the logic decided upon in option 4 (extended overlapping dynamic zoning) or that it had been incorrectly implemented in the code.  I placed a breakpoint in the code to be activated just before the deadlock scenario occurred so that I could examine the implementation and determine the cause of the problem.  It turned out that the implementation of the logic in the MustContinueInCurrentDirection method was flawed in that it only considered the floor of the other car's state, even if the other car had been authorised to proceed to the next floor and was moving towards it.  I changed the code to use the CurrentFloorsOccupied property of TCOSCar which includes the floor towards which a car has started moving.
 
-After I had corrected this aspect of the code, I ran the simulation again and found that everything behaved as expected.  The car state changes happened at the right times (within the 10-millisecond accuracy to which I had performed my calculations), and all passenger boarding and arrival times were as expected, as well as the success and failure of call allocations.  I am now confident that my changes to the Domain Model in the TCOS Elevator Simulator are valid.  \ref{tcosvalidationgraph} is an Excel-generated graph which shows the movement of the upper (pink) and lower (blue) cars with time, demonstrating the minimum distance maintained between the two cars.
+After I had corrected this aspect of the code, I ran the simulation again and found that everything behaved as expected.  The car state changes happened at the right times (within the 10-millisecond accuracy to which I had performed my calculations), and all passenger boarding and arrival times were as expected, as well as the success and failure of call allocations.  I am now confident that my changes to the Domain Model in the TCOS Elevator Simulator are valid.  \autoref{tcosvalidationgraph} is an Excel-generated graph which shows the movement of the upper (pink) and lower (blue) cars with time, demonstrating the minimum distance maintained between the two cars.
 
 \begin{figure} [h]
 	\centering
@@ -818,7 +968,7 @@ The only change to the Allocator component was for Allocators to handle call all
 \chapter{Discussion of Allocation Algorithms}
 \label{algdiscussion}
 
-In this chapter, I will discuss a number of allocation algorithms that I have developed or adapted for use in the TCOS case.  In Chapters \ref{algsimulation} and \ref{algevaluation} I will describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
+In this chapter, I will discuss a number of allocation algorithms that I have developed or adapted for use in the TCOS case.  In \autoref{algsimulation} and \autoref{algevaluation} I will describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
 
 \section{Estimated Time of Arrival Allocation (ETA)}
 \label{algETAdescription}
@@ -852,7 +1002,7 @@ where $c$ is the car, $h$ is the new hall call to be allocated, $G(c)$ is the se
 The total estimated cost of allocating call $h$ to car $c$ is as follows:
 \[ Cost(c, h) = SDF(c, h) + EWT(h, c, G(c) \cup \left\{ h \right\}) \]
 
-The cars are all ranked by their respective values of the estimated cost function.  If the most preferred car rejects the allocation (see the notes on option 4 in Chapter \ref{teschapter} for why this might happen) then the second most preferred car will be attempted, and so on.
+The cars are all ranked by their respective values of the estimated cost function.  If the most preferred car rejects the allocation (see the notes on option 4 in \autoref{teschapter} for why this might happen) then the second most preferred car will be attempted, and so on.
 
 Estimated waiting times can be calculated en masse by doing a rough simulation of the behaviour of the elevator using the six time parameters above and noting the boarding times of each group.  It would be possible to perform this simulation more exactly by using the simulation methods employed by my own TCOS Elevator Simulator but this is computationally expensive and in real world applications allocation decisions must be quickly computable both to make the process more efficient from a customer perspective and to avoid the state of the system changing significantly during the course of the computation.  I consider that the small loss of accuracy from using an approximate method is unlikely to significantly affect the performance of the allocation algorithm, and the consequences of an occasional sub-optimal allocation are of less concern than the alternative risks.
 
@@ -874,7 +1024,7 @@ Another factor that can be considered in ETA allocation algorithms is the questi
 
 The ETD algorithm is very similar to ETA, but with the difference that it attempts to minimise the average \textit{system} time (or squared system time) rather than the waiting time.  Usage of ETD in traditional elevator systems is hampered (to a greater extent than ETA) by the lack of information about passenger group destinations until they have boarded the car and pressed a button.  I expect that since the system with which we are concerned includes Destination Control we can make very effective use of this method without needing to speculate about passenger destinations.
 
-The comments made about ETA in section \ref{algETAdescription} also apply to ETD, as do the variant adaptation methods described (na\"{i}ve, conflict-sensitive and load-sensitive).  I will briefly discuss the way in which these adaptations can be analogously applied to ETD.
+The comments made about ETA in \autoref{algETAdescription} also apply to ETD, as do the variant adaptation methods described (na\"{i}ve, conflict-sensitive and load-sensitive).  I will briefly discuss the way in which these adaptations can be analogously applied to ETD.
 
 \subsection{Na\"{i}ve ETD}
 
@@ -896,7 +1046,7 @@ Again, Load-sensitive ETD is analogous to Load-sensitive ETA, but note that the 
 
 \section{Minimal Overlapping Allocation (MOA)}
 
-I have developed this simple allocation policy which attempts to minimise the amount of time lost by one car having to wait for the other car.  It does this by attempting to minimise the sizes of the overlap regions (as described in section \ref{algETAconflict}) throughout the system.  In this algorithm, the cost of allocating to a car $c$ which shares a shaft with car $d$ is the size of the extension caused to the existing overlap region between $c$ and $d$ (if any).  That is:
+I have developed this simple allocation policy which attempts to minimise the amount of time lost by one car having to wait for the other car.  It does this by attempting to minimise the sizes of the overlap regions (as described in \autoref{algETAconflict}) throughout the system.  In this algorithm, the cost of allocating to a car $c$ which shares a shaft with car $d$ is the size of the extension caused to the existing overlap region between $c$ and $d$ (if any).  That is:
 
 \[ Cost(c, d, h) = Overlap(c, d, G(c) \cup \left\{ h \right\}, G(d)) - Overlap(c, d, G(c), G(d)) \]
 
@@ -956,11 +1106,11 @@ Going forward, I have chosen to evaluate all permutations of the ETA and ETD var
 \chapter{Simulation of Allocation Algorithms}
 \label{algsimulation}
 
-In this chapter I will describe the Allocators added to the TCOS Elevator Simulator in order to simulate the behaviour of a system with each of the allocation algorithms described in Chapter \ref{algdiscussion}.  I will then describe the general process used to verify the correct behaviour of the new Allocators.
+In this chapter I will describe the Allocators added to the TCOS Elevator Simulator in order to simulate the behaviour of a system with each of the allocation algorithms described in \autoref{algdiscussion}.  I will then describe the general process used to verify the correct behaviour of the new Allocators.
 
 \section{Implementation}
 
-The general method for adding an Allocator to the simulator is described in section \ref{coresimallocatordescription}.  Here I will only discuss elements specific to each Allocator.
+The general method for adding an Allocator to the simulator is described in \autoref{coresimallocatordescription}.  Here I will only discuss elements specific to each Allocator.
 
 \subsection{ETA and ETD}
 
@@ -972,7 +1122,7 @@ Another method is defined, named PerformCarRun(calls, car, overlap), which retur
 
 The CalculateCost(car, group) method calculates the original waiting times for the calls currently allocated to $c$, ($G(c)$) by calling PerformCarRun($G(c)$, $c$, $Overlap(c,d,G(c),G(d))$), $Overlap(c,d,G(c),G(d))$ is the overlap region between $c$ and $d$ given the calls in $G(c)$ and $G(d)$.  It then calculates the waiting times including $h$ by calling PerformCarRun($G(c) \cup \left\{ h \right\}$, $c$, $Overlap(c,d,G(c) \cup \left\{ h \right\},G(d))$).  For the Conflict-\textit{insensitive} case the results of these two method calls are sufficient to calculate the cost.
 
-For the Conflict-sensitive case, CalculateCost(car, group) then goes on to get the values of PerformCarRun($G(d)$, $d$, $Overlap(c,d,G(c),G(d))$) (original waiting times for car $d$) and PerformCarRun($G(d)$, $d$, $Overlap(c,d,G(c) \cup \left\{ h \right\},G(d))$) (waiting times for car $d$ after $h$ has been assigned to $c$).  A ReconcileCarRuns(result1, result2) is called firstly with the results of car $c$ and $d$ \textit{before} the allocation of $h$ to $c$ and secondly with the results of car $c$ and $d$ \textit{after} the allocation of $h$ to $c$.  This method returns the the overall waiting times when conflicts between $c$ and $d$ are taken into account (according to the method described in \ref{algETAconflict}), and the two results are used to calculate the cost.
+For the Conflict-sensitive case, CalculateCost(car, group) then goes on to get the values of PerformCarRun($G(d)$, $d$, $Overlap(c,d,G(c),G(d))$) (original waiting times for car $d$) and PerformCarRun($G(d)$, $d$, $Overlap(c,d,G(c) \cup \left\{ h \right\},G(d))$) (waiting times for car $d$ after $h$ has been assigned to $c$).  A ReconcileCarRuns(result1, result2) is called firstly with the results of car $c$ and $d$ \textit{before} the allocation of $h$ to $c$ and secondly with the results of car $c$ and $d$ \textit{after} the allocation of $h$ to $c$.  This method returns the the overall waiting times when conflicts between $c$ and $d$ are taken into account (according to the method described in \autoref{algETAconflict}), and the two results are used to calculate the cost.
 
 The Allocator allocates the call to the most preferable car according to the cost of allocation.
 
@@ -988,7 +1138,7 @@ This Allocator works out a list including every car that can serve both the orig
 
 \section{Validation}
 
-As part of the Core Elevator Simulator, a Manual Allocator was included which does not perform any calculation itself but asks the user to choose which car the call should be allocated to.  In order to verify the behaviour of the three new Allocators I have designed a 5-minute passenger distribution which, when run using any of the new Allocators, causes their respective key code paths to be executed.  For each algorithm, I have used the Manual Allocator and made the allocation decisions myself in the way that I expect the implemented Allocators to behave.  I have then compared my allocation decisions to those of the implemented Allocators in the same situations.  This method has allowed me to concentrate specifically on the behaviour of the new Allocator code without having to worry about the logic of the Domain Model, which has already been properly tested in Chapters \ref{ceschapter} and \ref{teschapter}.  In all cases, the implemented Allocators were found to behave as expected.
+As part of the Core Elevator Simulator, a Manual Allocator was included which does not perform any calculation itself but asks the user to choose which car the call should be allocated to.  In order to verify the behaviour of the three new Allocators I have designed a 5-minute passenger distribution which, when run using any of the new Allocators, causes their respective key code paths to be executed.  For each algorithm, I have used the Manual Allocator and made the allocation decisions myself in the way that I expect the implemented Allocators to behave.  I have then compared my allocation decisions to those of the implemented Allocators in the same situations.  This method has allowed me to concentrate specifically on the behaviour of the new Allocator code without having to worry about the logic of the Domain Model, which has already been properly tested in \autoref{ceschapter} and \autoref{teschapter}.  In all cases, the implemented Allocators were found to behave as expected.
 
 \chapter{Evaluation of Allocation Algorithms}
 \label{algevaluation}
@@ -1238,7 +1388,7 @@ Finally, it would be interesting to explore the interaction between allocation a
 \appendix
 \part{Appendices}
 
-\chapter{Materials referred to in Chapter \ref{ceschapter}}
+\chapter{Materials referred to in \autoref{ceschapter}}
 
 \section{XML Materials}
 
@@ -1492,7 +1642,7 @@ This is the manually-produced trace table that was used to verify the behaviour 
 	13:04:14.65 & Idle & Down & 0 & 0 &  & 0
 \end{longtable}
 
-\chapter{Materials referred to in Chapter \ref{teschapter}}
+\chapter{Materials referred to in \autoref{teschapter}}
 
 \section{Validation Materials}
 

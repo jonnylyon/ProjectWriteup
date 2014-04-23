@@ -70,18 +70,18 @@ There are two types of passenger call that are served by elevators:  \citep{Gago
 
 \subsection{Traffic Types}
 
-In many elevator systems, the general flow of traffic varies (sometimes predictably) during the day.  Different traffic flows can require different strategies in order to handle them efficiently.  Some papers choose to focus on a specific type of traffic flow when developing and testing their algorithms, while some algorithms are designed to be generic.  There has been some research into designing a system that can detect the type of traffic flow and alter the scheduling strategy accordingly; this will be discussed later.  The main recognised traffic flows are as follows:  \citep{Nikovski2003, Brand2004, Rong2003, Smith2002, Collins1993Patent, Bao1994}
+In many elevator systems, the general flow of traffic varies (sometimes predictably) during the day.  Different traffic flows can require different strategies in order to handle them efficiently.  Some papers choose to focus on a specific type of traffic flow when developing and testing their algorithms, while some algorithms are designed to be generic.  There has been some research into designing a system that can detect the type of traffic flow and alter the scheduling strategy accordingly; this will be discussed later.  The main recognised traffic flows are as follows:  \citep{Nikovski2003, Brand2004, Rong2003, Smith2002, Collins1993Patent, Bao1994, Pepyne1997}
 
 \begin{description}
-	\item[Up-peak traffic] This traffic type is best demonstrated by considering the morning peak period of travel in an office building.  Since most people are arriving at work, the vast majority of traffic originates from the lobby (floor 0) and is destined for higher floors (though the exact destinations are not known).  In the simplified case, all traffic goes from floor 0 to another floor.  \citep{Bao1994, Brand2004, Smith2002}
-	\item[Down-peak traffic] Similarly, this is the kind of traffic that occurs at the end of an office day when the majority of passengers are travelling down the building.  At first this sounds like it is similar to the up-peak traffic type, but in a different direction.  However, it actually presents very different challenges; in this case most passengers have an unknown origin floor but a known destination floor.  In the simplified case all passengers can originate from any floor, but all will be destined for floor 0.  \citep{Bao1994, Brand2004, Smith2002}
-	\item[Interfloor traffic] In this traffic type, passengers travel from any part of the building to any other part of the building (not necessary to/from floor 0) in any direction.  \citep{Collins1993Patent}
-	\item[Lunchtime traffic] The lunchtime traffic type is a combination of the up-peak and down-peak types.  Because the lunch break is relatively short and probably overlaps, you can have the situation where passengers are going both up and down the building at once, but primarily either originating from or going to floor 0.  In the simplified case, all traffic either originates from or is destined for floor 0.  \citep{Bao1994, Brand2004, Smith2002}
+	\item[Up-peak traffic] This traffic type is best demonstrated by considering the morning peak period of travel in an office building.  Since most people are arriving at work, the vast majority of traffic originates from the lobby (floor 0) and is destined for higher floors (though the exact destinations are not known).  In the simplified case, all traffic goes from floor 0 to another floor.  \citep{Bao1994, Brand2004, Smith2002, Pepyne1997}
+	\item[Down-peak traffic] Similarly, this is the kind of traffic that occurs at the end of an office day when the majority of passengers are travelling down the building.  At first this sounds like it is similar to the up-peak traffic type, but in a different direction.  However, it actually presents very different challenges; in this case most passengers have an unknown origin floor but a known destination floor.  In the simplified case all passengers can originate from any floor, but all will be destined for floor 0.  \citep{Bao1994, Brand2004, Smith2002, Pepyne1997}
+	\item[Interfloor traffic] In this traffic type, passengers travel from any part of the building to any other part of the building (not necessary to/from floor 0) in any direction.  \citep{Pepyne1997, Collins1993Patent}
+	\item[Lunchtime traffic] The lunchtime traffic type is a combination of the up-peak and down-peak types.  Because the lunch break is relatively short and probably overlaps, you can have the situation where passengers are going both up and down the building at once, but primarily either originating from or going to floor 0.  In the simplified case, all traffic either originates from or is destined for floor 0.  \citep{Bao1994, Brand2004, Smith2002, Pepyne1997}
 \end{description}
 
 \subsection{Types of Hall Call Allocation Policy}
 
-Broadly, there are two types of policy for allocating a car to serve a Hall Call:  \citep{Bao1994, Rong2003}
+Broadly, there are two types of policy for allocating a car to serve a Hall Call:  \citep{Bao1994, Rong2003, Nikovski2003}
 
 \begin{description}
 	\item[Immediate Allocation] This type of allocation policy, widespread in Japan, allocates an elevator to the hall call as soon as the button has been pressed.  Optionally, passengers are informed of the allocation immediately, which typically reduces the \textit{perceived} waiting time for each passenger.  Destination control systems use immediate allocation algorithms.
@@ -101,7 +101,7 @@ There are a few constraints and assumptions that are generally accepted by the e
 
 \subsection{Control Objectives}
 
-The definition of a `good' or `optimal' elevator scheduling algorithm is somewhat subjective.  There are a range of different measures used in the literature to compare the suitability of certain algorithms.  These include the following:  \citep{Bao1994}
+The definition of a `good' or `optimal' elevator scheduling algorithm is somewhat subjective.  There are a range of different measures used in the literature to compare the suitability of certain algorithms.  These include the following:  \citep{Bao1994, Nikovski2003}
 
 \begin{description}
 	\item[Average waiting time] The average time from when a passenger presses the call button to when a car arrives to pick them up.
@@ -138,7 +138,7 @@ This algorithm considers the passenger arrival rates of the various floors in th
 
 \subsubsection{Longest Queue First Algorithm (LQF) \citep{Bao1994}}
 
-In this algorithm, when the car has dropped off passengers at floor 0, it carries any waiting upward-bound passengers to their destinations.  Following this, it chooses the floor with the longest queue of down-peak passengers and goes straight to it to take them down to the ground floor.  On its way down it stops at every floor with a downward hall call.  \citet{Bao1994} do not give any detail as to how queue lengths are estimated, but a number of other papers refer to methods of estimation based on known arrival rates, the time since the last call was made, the number of times the call button has been pressed, and so on \citep{Crites1996, Crites1998, Thangavelu1989Patent, Pepyne1997}.
+In this algorithm, when the car has dropped off passengers at floor 0, it carries any waiting upward-bound passengers to their destinations.  Following this, it chooses the floor with the longest queue of down-peak passengers and goes straight to it to take them down to the ground floor.  On its way down it stops at every floor with a downward hall call.  \citet{Bao1994} do not give any detail as to how queue lengths are estimated, but a number of other papers refer to methods of estimation based on known arrival rates, the time since the last call was made, the number of times the call button has been pressed, and so on \citep{Crites1996, Crites1998, Thangavelu1989Patent, Pepyne1997, Nikovski2003}.
 
 \subsubsection{Dynamic Load Balancing (DLB) \citep{Bao1994}}
 
@@ -184,6 +184,7 @@ Since each hall call can only be assigned to one car, if a car is allocated a ha
 The load function for FIM is the same as that for HUFF, but it has to take into account that some cars have multiple zones to visit.  \textit{Bao1994} do not explicitly specify how to determine the order in which zones are visited by the cars, but it is assumed (and seemingly sensible) that to avoid unnecessary changes of direction the cars visit upward zones in order from low to high in the building followed by downward zones in order from high to low.
 
 \subsubsection{Empty the System Algorithm (ESA) \citep{Bao1994}}
+\label{LitRevESA}
 
 ESA operates in a similar way to HUFF in that it aims to find an assignment of cars to floors in the system that minimises some load function.  However, the methods of constraining the search space and the load function differ.
 
@@ -196,11 +197,67 @@ The search space for car assignment is defined as follows:
 	\item Any free car must be assigned to a hall call if there are any available.
 \end{itemize}
 
-The load function for a floor allocation is calculated as the sum of the \textit{residual wait times} for each floor, where the residual wait time is the predicted time that passengers will have to wait to be served from now, not including any time that they may already have waited.
+The load function for a floor allocation is calculated as the sum of the \textit{residual wait times} (RWT) for each floor, where the residual wait time is the predicted time that passengers will have to wait to be served from now, not including any time that they may already have waited.
+
+\subsubsection{Results of simulations by \citet{Bao1994}}
+
+With simulations, it was found that FIM, ESA and HUFF were the most suitable in general for the down-peak profiles against which their performance was tested.  The algorithms were ranked by several different methods of success, including Average Waiting Time, Average Squared Waiting Time and Average System Time and generally FIM and ESA were the two leading performers.
 
 \subsection{Up-peak Scheduling Algorithms}
 
+\subsubsection{Threshold-based Dispatch Policy \citep{Pepyne1997}}
+
+In a pure up-peak scenario, where all passengers originate from floor 0 without exception, it is sensible to consider that the behaviour of cars is generally to pick up passengers from floor 0, travel up the shaft stopping at any floor for which a car call has been registered, and once all car calls have been served to return down to floor 0 and pick up more passengers.  While the car sits at floor 0 passengers will arrive and board the car, but at some point the car must close its doors and leave.  It was noted by \citet{Pepyne1997} that the only decision that needs to be made is for how long should each car wait at floor 0?  The obvious potential policies here are to dispatch a car from floor 0 prompted either by the lapsing of some time threshold, the surpassing of some load/capacity threshold, or the arrival of another car at floor 0.  \citet{Pepyne1997} demonstrate that, in the specific case of \textit{pure} up-peak traffic, load threshold-based policies are \textit{provably optimal} -- elevators should be dispatched when some load threshold is surpassed.  \citet{Pepyne1997} do not specify any specific thresholds, as these unfortunately depend on the specifics of the scenario.  It is demonstrated in their paper that the ideal threshold would be chosen so as to match the service rate with the passenger arrival rate.  A policy based on load relies on the avaibility of load data, but it is suggested by the authors that cars typically record rough estimations of this data either from the weight of the loaded car or from light-sensors tracking movement through the doors.
+
 \subsection{Generic Scheduling Algorithms}
+
+\subsubsection{ESA by Dynamic Programming (ESA-DP) \citep{Nikovski2003}}
+\label{LitRevESADP}
+
+Inspired by the ESA algorithm for down-peak traffic presented by \citet{Bao1994} (described above in \autoref{LitRevESA}), \citet{Nikovski2003} used Dynamic Programming techniques to extend it to a general purpose algorithm.
+
+ESA makes use of the assumption that all of its downward hall calls have the destination of floor 0 (which is a valid assumption in the pure off-peak case).  This affords some simplicity to the ESA load function, which can calculate the RWTs deterministically.  However, this assumption is clearly not valid for general purpose algorithms.  The ESA-DP load function considers the unknown destinations of each waiting passenger as a probability distribution, and uses these distributions to determine \textit{expected} RWTs for each passenger by considering the future movements of each car probabilistically.
+
+Initially, this looks like a very costly approach; after all, each car moves through a state space defined by more than two continuous parameters (location and speed), and the number of permutations of passenger destinations explodes as the number of passengers increases.  However, \citet{Nikovski2003} identify that each car follows specific and consistent paths through the state space, defined by interfloor distances, maximum speeds and rates of acceleration and deceleration.  These paths only branch at the moments when cars must decide whether or not to stop at the next floor (the decision points, or textit{branching points}).  Thus the continuous state space can be dicretised into a model whereby the branching points are the states, and state transitions exist only between branching points that are connected by lines of acceleration, deceleration and the line of maximum speed.  The ESA-DP load function uses Markov chain logic with the discretised state space, performing a Bellman backup to calculate the expected RWT values.
+
+The probability distributions for unknown passenger destinations can be manually defined, learnt, or fixed as uniform over all of the possibilities.
+
+\citet{Nikovski2003} performed simulation tests with ESA-DP and found that it generally outperformed an unspecified benchmark algorithm, in some cases reducing waiting times by up to 40\%.
+
+\subsubsection{Estimated Time of Arrival (ETA) \citep{Rong2003}}
+\label{LitRevETA}
+
+ETA is an immediate allocation algorithm.  The basic idea is that when a hall call is made, the controller considers the effect of allocating the call to each of the elevator cars and then evaluates which of the allocations minimises the amount of time spent waiting for cars by everyone in the system.  The cost of allocating a hall call to car $i$ is made up of two parts: firstly, the time taken for car $i$ to reach and serve that hall call; secondly, the sum of the extra waiting time added to other passengers whose hall calls have also been allocated to car $i$.
+
+While this concept sounds very straightforward, it is actually not possible to calculate with confidence in traditional elevator systems without destination control, because the destination of hall calls is not known until the passenger is inside the elevator and presses a destination button.  However, \citet{Rong2003} propose that in the absence of destination control, probability can be used to determine expected values for these times.
+
+Firstly, it is useful to consider that hall calls for a single car can be grouped into three main sets of calls (or `passages'): \textit{P1}, \textit{P2} and \textit{P3}.  The passage P1 refers to those hall calls that can be served without the elevator changing direction.  If the car is moving up and currently at floor $x$, an upwards hall call from floor $x + 1$ is in P1.  P2 refers to those hall calls that must be served by the car making one reversing movement.  For example, if the car is moving up and currently at floor $x$, a downwards hall call from floor $x + 1$ is in P2; the car must travel upwards until it is at or higher than $x + 1$ before reversing direction to take the passenger downwards.  This is also true if there is a downward hall call from floor $x – 1$ in this scenario.  The final passage, P3, refers to those hall calls that can only be served by the elevator reversing twice.  Continuing with the same examples, an upward hall call from floor $x – 1$ would be in P3; the car would have to finish dropping off its upward passengers, reverse, potentially pick up and drop off some downward passengers until it is at or lower than $x – 1$, then reverse again to come upwards and pick the upward passenger up from $x – 1$.
+
+\citet{Rong2003} make the assumption that the chance of a hall call being destined for any particular floor follows a uniform distribution; so if the hall call is an upward call from floor 3 and the highest floor in the building is floor six, there are equal one third chances of the passenger being destined for floors 4, 5 and 6.  Therefore, if the car is going up and the destinations of all car calls are known, as well as the origins of all hall calls, a probabilistic expectation of which floor is likely to be the highest floor that the lift will visit before turning around can be calculated.  This means that expected estimated waiting times can be calculated for hall calls in P2 as well as those in P1.  By extension, a similar method can be used to estimate waiting times for calls in P3.
+
+With greater knowledge of the specific scenario in which an elevator system is being deployed, it may be possible to develop a more accurate way of predicting the floors that will need to be served by an elevator.  Notably, with destination control it would not be necessary to guess about these things as all destination information would be available from the time the hall call was made.
+
+\subsubsection{Estimated Time of Arrival -- Reallocation variant (ETA-R) \citep{Rong2003}}
+
+ETA-R is a continuous-allocation variant of ETA, also proposed by \citet{Rong2003}.  In ETA-R, after a new hall call is assigned to a car, the algorithm sometimes considers a few hall calls that may be good candidates for reallocation.  These are:
+\begin{itemize}
+	\item The oldest hall call in the system
+	\item The oldest hall call assigned to the car (if the car has a high number of calls assigned)
+	\item The last hall call in the service sequence of the car, if it is in P2 or P3
+	\item The hall calls whose floor and destination are matched with a car call
+\end{itemize}
+
+It is suggested that the first three of those four options will only be evaluated for reallocation when the hall calls in question are older than a certain threshold.  For example, the oldest hall call in the system might not be older than the set threshold, in which case it will not be considered for reallocation even though it is the oldest in the system.  There is no restriction of this type on the fourth option.  The decision about whether or not to go ahead with a considered reallocation is made using similar logic as the regular hall call allocation process.
+
+The tests run by \citet{Rong2003} covered a wide range of scenarios and traffic patterns, and found that ETA-R offered improved performance, reducing the average waiting time significantly.
+
+\subsubsection{Estimated Time to Destination (ETD) \citep{Smith2002}}
+
+ETD is very similar to ETA, with the difference is that it aims to minimise the amount of time taken for every passenger to get to their destination, rather than just to be picked up by a car.  Like ETA, this works best with destination control when all of the information is known, but it can also be used based on expected destinations.  It is an immediate allocation policy, but \citet{Smith2002} note that reallocation variants are also applicable to ETD.
+
+\subsubsection{Q-Learning \& Neural Networks \citep{Crites1998}}
+
+\citet{Crites1998} have taken a Q-Learning approach using neural networks.  The product of their investigations had some success in that they were able to slightly outperform FIM and ESA, but it required 60,000 hours of simulated learning time (almost 7 years), which is clearly an impractically long time for real-life use.
 
 \part{Elevator Simulator}
 
@@ -364,7 +421,7 @@ The behaviour of cars is governed precisely by the following three rules:
 
 \subsubsection{Control Logic}
 
-Since the decision was made to use a discrete event-based simulation, it was necessary to consider how the movement of the cars, which is inherently continuous, could be represented meaningfully in a discrete manner.  While developing a dynamic programming approach to elevator scheduling, Nikovski and Brand [REF] present a discretised model of the state space of an elevator car in terms of its position in the shaft, which has been adapted for use in this simulator.  If one considers the two parameters of the continuous state space to be current speed and vertical position in the shaft then, given that the car will have some pre-determined maximum speed and rates of acceleration and deceleration, it can be seen that the car will follow certain fixed paths around this state space.  
+Since the decision was made to use a discrete event-based simulation, it was necessary to consider how the movement of the cars, which is inherently continuous, could be represented meaningfully in a discrete manner.  While developing a dynamic programming approach to elevator scheduling, \citet{Nikovski2003} present a discretised model of the state space of an elevator car in terms of its position in the shaft (see \autoref{LitRevESADP}), which has been adapted for use in this simulator.  If one considers the two parameters of the continuous state space to be current speed and vertical position in the shaft then, given that the car will have some pre-determined maximum speed and rates of acceleration and deceleration, it can be seen that the car will follow certain fixed paths around this state space.
 
 \autoref{shaftstates} gives an example of a possible state space for an upward-travelling car, where the red dots represent the states, the green lines the transitions between states, and the blue lines the paths of deceleration from each state to its associated floor.  Each state can be thought of as a decision-point for its associated floor, at which the car decides whether to start slowing down in order to stop at the associated floor, or to carry on travelling upwards to the next decision point).  In this example, the floors are spaced evenly, but one can imagine how the states might look otherwise.  In any case, since each state lies on one of the blue deceleration paths, the parameters of a state can be determined from the floor with which it is associated, the movement speed associated with the state, and the specified rate of deceleration of the car.  A similar diagram could be drawn for a downward-moving car.
 

@@ -1,131 +1,131 @@
 \select@language {british}
-\contentsline {part}{\numberline {I}Introduction}{10}{part.1}
-\contentsline {chapter}{\numberline {1}Introduction}{11}{chapter.1}
-\contentsline {section}{\numberline {1.1}Introduction}{11}{section.1.1}
-\contentsline {section}{\numberline {1.2}Outline of Report}{11}{section.1.2}
-\contentsline {section}{\numberline {1.3}Statement of Ethics}{11}{section.1.3}
-\contentsline {part}{\numberline {II}Literature Review}{12}{part.2}
-\contentsline {chapter}{\numberline {2}Literature Review}{13}{chapter.2}
-\contentsline {section}{\numberline {2.1}General Concepts}{13}{section.2.1}
-\contentsline {subsection}{\numberline {2.1.1}Destination Control}{13}{subsection.2.1.1}
-\contentsline {subsection}{\numberline {2.1.2}Types of Passenger Call}{13}{subsection.2.1.2}
-\contentsline {subsection}{\numberline {2.1.3}Traffic Types}{13}{subsection.2.1.3}
-\contentsline {subsection}{\numberline {2.1.4}Types of Hall Call Allocation Policy}{14}{subsection.2.1.4}
-\contentsline {subsection}{\numberline {2.1.5}General Constraints}{14}{subsection.2.1.5}
-\contentsline {subsection}{\numberline {2.1.6}Control Objectives}{15}{subsection.2.1.6}
-\contentsline {section}{\numberline {2.2}Scheduling Algorithms}{15}{section.2.2}
-\contentsline {subsection}{\numberline {2.2.1}Down-peak Scheduling Algorithms}{15}{subsection.2.2.1}
-\contentsline {subsubsection}{\nonumberline Otis Round Robin Algorithm (OTIS) \citep {Bao1994}}{16}{section*.2}
-\contentsline {subsubsection}{\nonumberline Down-peak Rate Matching Algorithm (D-RMA) \citep {Bao1994}}{16}{section*.3}
-\contentsline {subsubsection}{\nonumberline Longest Queue First Algorithm (LQF) \citep {Bao1994}}{16}{section*.4}
-\contentsline {subsubsection}{\nonumberline Dynamic Load Balancing (DLB) \citep {Bao1994}}{17}{section*.5}
-\contentsline {subsubsection}{\nonumberline Highest Unanswered Floor First -- Basic (BASIC HUFF) \citep {Bao1994}}{17}{section*.6}
-\contentsline {subsubsection}{\nonumberline Highest Unanswered Floor First -- Advanced (HUFF) \citep {Bao1994}}{17}{section*.7}
-\contentsline {subsubsection}{\nonumberline Finite Inter-visit Time Minimisation (FIM) \citep {Bao1994}}{18}{section*.8}
-\contentsline {subsubsection}{\nonumberline Empty the System Algorithm (ESA) \citep {Bao1994}}{19}{section*.9}
-\contentsline {subsubsection}{\nonumberline Results of simulations by \citet {Bao1994}}{19}{section*.10}
-\contentsline {subsection}{\numberline {2.2.2}Up-peak Scheduling Algorithms}{19}{subsection.2.2.2}
-\contentsline {subsubsection}{\nonumberline Threshold-based Dispatch Policy \citep {Pepyne1997}}{19}{section*.11}
-\contentsline {subsection}{\numberline {2.2.3}Generic Scheduling Algorithms}{20}{subsection.2.2.3}
-\contentsline {subsubsection}{\nonumberline ESA by Dynamic Programming (ESA-DP) \citep {Nikovski2003}}{20}{section*.12}
-\contentsline {subsubsection}{\nonumberline Estimated Time of Arrival (ETA) \citep {Rong2003}}{21}{section*.13}
-\contentsline {subsubsection}{\nonumberline Estimated Time of Arrival -- Reallocation variant (ETA-R) \citep {Rong2003}}{21}{section*.14}
-\contentsline {subsubsection}{\nonumberline Estimated Time to Destination (ETD) \citep {Smith2002}}{22}{section*.15}
-\contentsline {subsubsection}{\nonumberline Q-Learning \& Neural Networks \citep {Crites1998}}{22}{section*.16}
-\contentsline {part}{\numberline {III}Elevator Simulator}{23}{part.3}
-\contentsline {chapter}{\numberline {3}Core Elevator Simulator}{24}{chapter.3}
-\contentsline {section}{\numberline {3.1}Introduction}{24}{section.3.1}
-\contentsline {section}{\numberline {3.2}Requirements}{24}{section.3.2}
-\contentsline {subsection}{\numberline {3.2.1}Specification of Requirements}{24}{subsection.3.2.1}
-\contentsline {subsubsection}{\nonumberline Functional Requirements}{25}{section*.17}
-\contentsline {subsubsection}{\nonumberline Non-Functional Requirements}{26}{section*.18}
-\contentsline {subsection}{\numberline {3.2.2}Justification of Requirements}{26}{subsection.3.2.2}
-\contentsline {section}{\numberline {3.3}Technology Decisions}{27}{section.3.3}
-\contentsline {section}{\numberline {3.4}Architecture}{27}{section.3.4}
-\contentsline {section}{\numberline {3.5}Domain Assumptions}{29}{section.3.5}
-\contentsline {section}{\numberline {3.6}Detailed Description of Components}{30}{section.3.6}
-\contentsline {subsection}{\numberline {3.6.1}Domain Model Component}{30}{subsection.3.6.1}
-\contentsline {subsubsection}{\nonumberline Control Logic}{31}{section*.19}
-\contentsline {subsubsection}{\nonumberline Movement Mathematics}{33}{section*.20}
-\contentsline {paragraph}{\nonumberline Moving state}{34}{section*.21}
-\contentsline {paragraph}{\nonumberline Leaving state}{36}{section*.22}
-\contentsline {paragraph}{\nonumberline Stopping state}{36}{section*.23}
-\contentsline {subsection}{\numberline {3.6.2}Allocator Component}{37}{subsection.3.6.2}
-\contentsline {subsection}{\numberline {3.6.3}Passenger Distribution Generator}{38}{subsection.3.6.3}
-\contentsline {subsubsection}{\nonumberline Generating values with a Poisson distribution}{39}{section*.24}
-\contentsline {subsection}{\numberline {3.6.4}Simulation Configuration}{39}{subsection.3.6.4}
-\contentsline {section}{\numberline {3.7}Validation}{40}{section.3.7}
-\contentsline {subsection}{\numberline {3.7.1}Domain Model Component}{40}{subsection.3.7.1}
-\contentsline {subsection}{\numberline {3.7.2}Allocator Component}{42}{subsection.3.7.2}
-\contentsline {chapter}{\numberline {4}TCOS Elevator Simulator}{43}{chapter.4}
-\contentsline {section}{\numberline {4.1}Introduction}{43}{section.4.1}
-\contentsline {section}{\numberline {4.2}Additional Requirements}{43}{section.4.2}
-\contentsline {subsection}{\numberline {4.2.1}Specification of Requirements}{43}{subsection.4.2.1}
-\contentsline {subsubsection}{\nonumberline Functional Requirements}{43}{section*.25}
-\contentsline {subsubsection}{\nonumberline Non-Functional Requirements}{43}{section*.26}
-\contentsline {subsection}{\numberline {4.2.2}Justification of Requirements}{44}{subsection.4.2.2}
-\contentsline {section}{\numberline {4.3}Domain Assumptions}{44}{section.4.3}
-\contentsline {section}{\numberline {4.4}High Level Design Decisions}{44}{section.4.4}
-\contentsline {subsection}{\numberline {4.4.1}Option 1: Dynamic `Zoning' Approach}{44}{subsection.4.4.1}
-\contentsline {subsection}{\numberline {4.4.2}Option 2: Conflict Resolution Approach}{45}{subsection.4.4.2}
-\contentsline {subsection}{\numberline {4.4.3}Option 3: Overlapping Dynamic Zoning Approach}{45}{subsection.4.4.3}
-\contentsline {subsection}{\numberline {4.4.4}Option 4: Extended Overlapping Dynamic Zoning Approach}{46}{subsection.4.4.4}
-\contentsline {section}{\numberline {4.5}Detailed Description of Changes Made}{47}{section.4.5}
-\contentsline {subsection}{\numberline {4.5.1}Domain Model Component}{47}{subsection.4.5.1}
-\contentsline {subsection}{\numberline {4.5.2}Allocator Component}{48}{subsection.4.5.2}
-\contentsline {subsection}{\numberline {4.5.3}Simulation Configuration}{49}{subsection.4.5.3}
-\contentsline {section}{\numberline {4.6}Validation}{49}{section.4.6}
-\contentsline {subsection}{\numberline {4.6.1}Domain Model Component}{49}{subsection.4.6.1}
-\contentsline {subsection}{\numberline {4.6.2}Allocator Component}{51}{subsection.4.6.2}
-\contentsline {part}{\numberline {IV}Algorithms for TCOS Elevator Systems}{52}{part.4}
-\contentsline {chapter}{\numberline {5}Discussion of Allocation Algorithms}{53}{chapter.5}
-\contentsline {section}{\numberline {5.1}Estimated Time of Arrival Allocation (ETA)}{53}{section.5.1}
-\contentsline {subsection}{\numberline {5.1.1}Na\"{i}ve ETA}{53}{subsection.5.1.1}
-\contentsline {subsection}{\numberline {5.1.2}Conflict-sensitive ETA}{54}{subsection.5.1.2}
-\contentsline {subsection}{\numberline {5.1.3}Load-sensitive ETA}{55}{subsection.5.1.3}
-\contentsline {section}{\numberline {5.2}Estimated Time to Destination Allocation (ETD)}{55}{section.5.2}
-\contentsline {subsection}{\numberline {5.2.1}Na\"{i}ve ETD}{56}{subsection.5.2.1}
-\contentsline {subsection}{\numberline {5.2.2}Conflict-sensitive ETD}{56}{subsection.5.2.2}
-\contentsline {subsection}{\numberline {5.2.3}Load-sensitive ETD}{56}{subsection.5.2.3}
-\contentsline {section}{\numberline {5.3}Minimal Overlapping Allocation (MOA)}{56}{section.5.3}
-\contentsline {section}{\numberline {5.4}Fixed TCOS Zoning Allocation (FZA)}{57}{section.5.4}
-\contentsline {section}{\numberline {5.5}Summary of Allocation Algorithms to Evaluate}{58}{section.5.5}
-\contentsline {chapter}{\numberline {6}Simulation of Allocation Algorithms}{59}{chapter.6}
-\contentsline {section}{\numberline {6.1}Implementation}{59}{section.6.1}
-\contentsline {subsection}{\numberline {6.1.1}ETA and ETD}{59}{subsection.6.1.1}
-\contentsline {subsection}{\numberline {6.1.2}MOA}{60}{subsection.6.1.2}
-\contentsline {subsection}{\numberline {6.1.3}FZA}{60}{subsection.6.1.3}
-\contentsline {section}{\numberline {6.2}Validation}{60}{section.6.2}
-\contentsline {chapter}{\numberline {7}Evaluation of Allocation Algorithms}{61}{chapter.7}
-\contentsline {section}{\numberline {7.1}Simulation Scenario}{61}{section.7.1}
-\contentsline {subsection}{\numberline {7.1.1}Parameters of building}{61}{subsection.7.1.1}
-\contentsline {subsection}{\numberline {7.1.2}Traffic flows}{61}{subsection.7.1.2}
-\contentsline {paragraph}{\nonumberline Up-peak}{62}{section*.27}
-\contentsline {paragraph}{\nonumberline Down-peak}{62}{section*.28}
-\contentsline {paragraph}{\nonumberline Interfloor}{62}{section*.29}
-\contentsline {paragraph}{\nonumberline Lunchtime}{62}{section*.30}
-\contentsline {subsection}{\numberline {7.1.3}FZA Split Points}{62}{subsection.7.1.3}
-\contentsline {section}{\numberline {7.2}Results}{63}{section.7.2}
-\contentsline {subsection}{\numberline {7.2.1}Up-peak}{64}{subsection.7.2.1}
-\contentsline {subsection}{\numberline {7.2.2}Down-peak}{64}{subsection.7.2.2}
-\contentsline {subsection}{\numberline {7.2.3}Interfloor}{65}{subsection.7.2.3}
-\contentsline {subsection}{\numberline {7.2.4}Lunchtime}{65}{subsection.7.2.4}
-\contentsline {subsection}{\numberline {7.2.5}Discussion of Results}{66}{subsection.7.2.5}
-\contentsline {part}{\numberline {V}Conclusion}{67}{part.5}
-\contentsline {chapter}{\numberline {8}Conclusion and Further Work}{68}{chapter.8}
-\contentsline {section}{\numberline {8.1}Conclusion}{68}{section.8.1}
-\contentsline {section}{\numberline {8.2}Further Work}{68}{section.8.2}
-\contentsline {subsection}{\numberline {8.2.1}Simulation Tool}{69}{subsection.8.2.1}
-\contentsline {subsection}{\numberline {8.2.2}TCOS Algorithms}{69}{subsection.8.2.2}
-\contentsline {part}{\numberline {VI}Appendices}{73}{part.6}
-\contentsline {chapter}{\numberline {A}Materials referred to in \autoref {ceschapter}}{74}{appendix.A}
-\contentsline {section}{\numberline {A.1}XML Materials}{74}{section.A.1}
-\contentsline {subsection}{\numberline {A.1.1}Sample Passenger Arrival Schedule file}{74}{subsection.A.1.1}
-\contentsline {subsection}{\numberline {A.1.2}Sample Simulation Configuration file}{75}{subsection.A.1.2}
-\contentsline {section}{\numberline {A.2}Validation Materials}{75}{section.A.2}
-\contentsline {subsection}{\numberline {A.2.1}Passenger Arrival Schedule}{75}{subsection.A.2.1}
-\contentsline {subsection}{\numberline {A.2.2}Trace Table}{76}{subsection.A.2.2}
-\contentsline {chapter}{\numberline {B}Materials referred to in \autoref {teschapter}}{79}{appendix.B}
-\contentsline {section}{\numberline {B.1}Validation Materials}{79}{section.B.1}
-\contentsline {subsection}{\numberline {B.1.1}Passenger Arrival Schedule}{79}{subsection.B.1.1}
-\contentsline {subsection}{\numberline {B.1.2}Trace Table}{80}{subsection.B.1.2}
+\contentsline {part}{\numberline {I}Introduction}{i}{part.1}
+\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.1}
+\contentsline {section}{\numberline {1.1}Introduction}{2}{section.1.1}
+\contentsline {section}{\numberline {1.2}Outline of Report}{2}{section.1.2}
+\contentsline {section}{\numberline {1.3}Statement of Ethics}{3}{section.1.3}
+\contentsline {part}{\numberline {II}Literature Review}{4}{part.2}
+\contentsline {chapter}{\numberline {2}Literature Review}{5}{chapter.2}
+\contentsline {section}{\numberline {2.1}General Concepts}{5}{section.2.1}
+\contentsline {subsection}{\numberline {2.1.1}Destination Control}{5}{subsection.2.1.1}
+\contentsline {subsection}{\numberline {2.1.2}Types of Passenger Call}{5}{subsection.2.1.2}
+\contentsline {subsection}{\numberline {2.1.3}Traffic Types}{5}{subsection.2.1.3}
+\contentsline {subsection}{\numberline {2.1.4}Types of Hall Call Allocation Policy}{6}{subsection.2.1.4}
+\contentsline {subsection}{\numberline {2.1.5}General Constraints}{6}{subsection.2.1.5}
+\contentsline {subsection}{\numberline {2.1.6}Control Objectives}{7}{subsection.2.1.6}
+\contentsline {section}{\numberline {2.2}Scheduling Algorithms}{7}{section.2.2}
+\contentsline {subsection}{\numberline {2.2.1}Down-peak Scheduling Algorithms}{7}{subsection.2.2.1}
+\contentsline {subsubsection}{\nonumberline Otis Round Robin Algorithm (OTIS) \citep {Bao1994}}{8}{section*.2}
+\contentsline {subsubsection}{\nonumberline Down-peak Rate Matching Algorithm (D-RMA) \citep {Bao1994}}{8}{section*.3}
+\contentsline {subsubsection}{\nonumberline Longest Queue First Algorithm (LQF) \citep {Bao1994}}{8}{section*.4}
+\contentsline {subsubsection}{\nonumberline Dynamic Load Balancing (DLB) \citep {Bao1994}}{9}{section*.5}
+\contentsline {subsubsection}{\nonumberline Highest Unanswered Floor First -- Basic (BASIC HUFF) \citep {Bao1994}}{9}{section*.6}
+\contentsline {subsubsection}{\nonumberline Highest Unanswered Floor First -- Advanced (HUFF) \citep {Bao1994}}{9}{section*.7}
+\contentsline {subsubsection}{\nonumberline Finite Inter-visit Time Minimisation (FIM) \citep {Bao1994}}{10}{section*.8}
+\contentsline {subsubsection}{\nonumberline Empty the System Algorithm (ESA) \citep {Bao1994}}{11}{section*.9}
+\contentsline {subsubsection}{\nonumberline Results of simulations by \citet {Bao1994}}{11}{section*.10}
+\contentsline {subsection}{\numberline {2.2.2}Up-peak Scheduling Algorithms}{11}{subsection.2.2.2}
+\contentsline {subsubsection}{\nonumberline Threshold-based Dispatch Policy \citep {Pepyne1997}}{11}{section*.11}
+\contentsline {subsection}{\numberline {2.2.3}Generic Scheduling Algorithms}{12}{subsection.2.2.3}
+\contentsline {subsubsection}{\nonumberline ESA by Dynamic Programming (ESA-DP) \citep {Nikovski2003}}{12}{section*.12}
+\contentsline {subsubsection}{\nonumberline Estimated Time of Arrival (ETA) \citep {Rong2003}}{13}{section*.13}
+\contentsline {subsubsection}{\nonumberline Estimated Time of Arrival -- Reallocation variant (ETA-R) \citep {Rong2003}}{13}{section*.14}
+\contentsline {subsubsection}{\nonumberline Estimated Time to Destination (ETD) \citep {Smith2002}}{14}{section*.15}
+\contentsline {subsubsection}{\nonumberline Q-Learning \& Neural Networks \citep {Crites1998}}{14}{section*.16}
+\contentsline {part}{\numberline {III}Elevator Simulator}{15}{part.3}
+\contentsline {chapter}{\numberline {3}Core Elevator Simulator}{16}{chapter.3}
+\contentsline {section}{\numberline {3.1}Introduction}{16}{section.3.1}
+\contentsline {section}{\numberline {3.2}Requirements}{16}{section.3.2}
+\contentsline {subsection}{\numberline {3.2.1}Specification of Requirements}{16}{subsection.3.2.1}
+\contentsline {subsubsection}{\nonumberline Functional Requirements}{17}{section*.17}
+\contentsline {subsubsection}{\nonumberline Non-Functional Requirements}{18}{section*.18}
+\contentsline {subsection}{\numberline {3.2.2}Justification of Requirements}{18}{subsection.3.2.2}
+\contentsline {section}{\numberline {3.3}Technology Decisions}{19}{section.3.3}
+\contentsline {section}{\numberline {3.4}Architecture}{19}{section.3.4}
+\contentsline {section}{\numberline {3.5}Domain Assumptions}{21}{section.3.5}
+\contentsline {section}{\numberline {3.6}Detailed Description of Components}{22}{section.3.6}
+\contentsline {subsection}{\numberline {3.6.1}Domain Model Component}{22}{subsection.3.6.1}
+\contentsline {subsubsection}{\nonumberline Control Logic}{23}{section*.19}
+\contentsline {subsubsection}{\nonumberline Movement Mathematics}{25}{section*.20}
+\contentsline {paragraph}{\nonumberline Moving state}{27}{section*.21}
+\contentsline {paragraph}{\nonumberline Leaving state}{28}{section*.22}
+\contentsline {paragraph}{\nonumberline Stopping state}{29}{section*.23}
+\contentsline {subsection}{\numberline {3.6.2}Allocator Component}{29}{subsection.3.6.2}
+\contentsline {subsection}{\numberline {3.6.3}Passenger Distribution Generator}{30}{subsection.3.6.3}
+\contentsline {subsubsection}{\nonumberline Generating values with a Poisson distribution}{31}{section*.24}
+\contentsline {subsection}{\numberline {3.6.4}Simulation Configuration}{32}{subsection.3.6.4}
+\contentsline {section}{\numberline {3.7}Validation}{33}{section.3.7}
+\contentsline {subsection}{\numberline {3.7.1}Domain Model Component}{33}{subsection.3.7.1}
+\contentsline {subsection}{\numberline {3.7.2}Allocator Component}{34}{subsection.3.7.2}
+\contentsline {chapter}{\numberline {4}TCOS Elevator Simulator}{36}{chapter.4}
+\contentsline {section}{\numberline {4.1}Introduction}{36}{section.4.1}
+\contentsline {section}{\numberline {4.2}Additional Requirements}{36}{section.4.2}
+\contentsline {subsection}{\numberline {4.2.1}Specification of Requirements}{36}{subsection.4.2.1}
+\contentsline {subsubsection}{\nonumberline Functional Requirements}{36}{section*.25}
+\contentsline {subsubsection}{\nonumberline Non-Functional Requirements}{36}{section*.26}
+\contentsline {subsection}{\numberline {4.2.2}Justification of Requirements}{37}{subsection.4.2.2}
+\contentsline {section}{\numberline {4.3}Domain Assumptions}{37}{section.4.3}
+\contentsline {section}{\numberline {4.4}High Level Design Decisions}{37}{section.4.4}
+\contentsline {subsection}{\numberline {4.4.1}Option 1: Dynamic `Zoning' Approach}{37}{subsection.4.4.1}
+\contentsline {subsection}{\numberline {4.4.2}Option 2: Conflict Resolution Approach}{38}{subsection.4.4.2}
+\contentsline {subsection}{\numberline {4.4.3}Option 3: Overlapping Dynamic Zoning Approach}{38}{subsection.4.4.3}
+\contentsline {subsection}{\numberline {4.4.4}Option 4: Extended Overlapping Dynamic Zoning Approach}{39}{subsection.4.4.4}
+\contentsline {section}{\numberline {4.5}Detailed Description of Changes Made}{40}{section.4.5}
+\contentsline {subsection}{\numberline {4.5.1}Domain Model Component}{40}{subsection.4.5.1}
+\contentsline {subsection}{\numberline {4.5.2}Allocator Component}{41}{subsection.4.5.2}
+\contentsline {subsection}{\numberline {4.5.3}Simulation Configuration}{42}{subsection.4.5.3}
+\contentsline {section}{\numberline {4.6}Validation}{42}{section.4.6}
+\contentsline {subsection}{\numberline {4.6.1}Domain Model Component}{42}{subsection.4.6.1}
+\contentsline {subsection}{\numberline {4.6.2}Allocator Component}{44}{subsection.4.6.2}
+\contentsline {part}{\numberline {IV}Algorithms for TCOS Elevator Systems}{45}{part.4}
+\contentsline {chapter}{\numberline {5}Discussion of Allocation Algorithms}{46}{chapter.5}
+\contentsline {section}{\numberline {5.1}Estimated Time of Arrival Allocation (ETA)}{46}{section.5.1}
+\contentsline {subsection}{\numberline {5.1.1}Na\"{i}ve ETA}{46}{subsection.5.1.1}
+\contentsline {subsection}{\numberline {5.1.2}Conflict-sensitive ETA}{47}{subsection.5.1.2}
+\contentsline {subsection}{\numberline {5.1.3}Load-sensitive ETA}{48}{subsection.5.1.3}
+\contentsline {section}{\numberline {5.2}Estimated Time to Destination Allocation (ETD)}{48}{section.5.2}
+\contentsline {subsection}{\numberline {5.2.1}Na\"{i}ve ETD}{49}{subsection.5.2.1}
+\contentsline {subsection}{\numberline {5.2.2}Conflict-sensitive ETD}{49}{subsection.5.2.2}
+\contentsline {subsection}{\numberline {5.2.3}Load-sensitive ETD}{49}{subsection.5.2.3}
+\contentsline {section}{\numberline {5.3}Minimal Overlapping Allocation (MOA)}{49}{section.5.3}
+\contentsline {section}{\numberline {5.4}Fixed TCOS Zoning Allocation (FZA)}{50}{section.5.4}
+\contentsline {section}{\numberline {5.5}Summary of Allocation Algorithms to Evaluate}{51}{section.5.5}
+\contentsline {chapter}{\numberline {6}Simulation of Allocation Algorithms}{52}{chapter.6}
+\contentsline {section}{\numberline {6.1}Implementation}{52}{section.6.1}
+\contentsline {subsection}{\numberline {6.1.1}ETA and ETD}{52}{subsection.6.1.1}
+\contentsline {subsection}{\numberline {6.1.2}MOA}{53}{subsection.6.1.2}
+\contentsline {subsection}{\numberline {6.1.3}FZA}{53}{subsection.6.1.3}
+\contentsline {section}{\numberline {6.2}Validation}{53}{section.6.2}
+\contentsline {chapter}{\numberline {7}Evaluation of Allocation Algorithms}{54}{chapter.7}
+\contentsline {section}{\numberline {7.1}Simulation Scenario}{54}{section.7.1}
+\contentsline {subsection}{\numberline {7.1.1}Parameters of building}{54}{subsection.7.1.1}
+\contentsline {subsection}{\numberline {7.1.2}Traffic flows}{54}{subsection.7.1.2}
+\contentsline {paragraph}{\nonumberline Up-peak}{55}{section*.27}
+\contentsline {paragraph}{\nonumberline Down-peak}{55}{section*.28}
+\contentsline {paragraph}{\nonumberline Interfloor}{55}{section*.29}
+\contentsline {paragraph}{\nonumberline Lunchtime}{55}{section*.30}
+\contentsline {subsection}{\numberline {7.1.3}FZA Split Points}{55}{subsection.7.1.3}
+\contentsline {section}{\numberline {7.2}Results}{56}{section.7.2}
+\contentsline {subsection}{\numberline {7.2.1}Up-peak}{57}{subsection.7.2.1}
+\contentsline {subsection}{\numberline {7.2.2}Down-peak}{57}{subsection.7.2.2}
+\contentsline {subsection}{\numberline {7.2.3}Interfloor}{58}{subsection.7.2.3}
+\contentsline {subsection}{\numberline {7.2.4}Lunchtime}{58}{subsection.7.2.4}
+\contentsline {subsection}{\numberline {7.2.5}Discussion of Results}{59}{subsection.7.2.5}
+\contentsline {part}{\numberline {V}Conclusion}{60}{part.5}
+\contentsline {chapter}{\numberline {8}Conclusion and Further Work}{61}{chapter.8}
+\contentsline {section}{\numberline {8.1}Conclusion}{61}{section.8.1}
+\contentsline {section}{\numberline {8.2}Further Work}{61}{section.8.2}
+\contentsline {subsection}{\numberline {8.2.1}Simulation Tool}{62}{subsection.8.2.1}
+\contentsline {subsection}{\numberline {8.2.2}TCOS Algorithms}{62}{subsection.8.2.2}
+\contentsline {part}{\numberline {VI}Appendices}{66}{part.6}
+\contentsline {chapter}{\numberline {A}Materials referred to in \autoref {ceschapter}}{67}{appendix.A}
+\contentsline {section}{\numberline {A.1}XML Materials}{67}{section.A.1}
+\contentsline {subsection}{\numberline {A.1.1}Sample Passenger Arrival Schedule file}{67}{subsection.A.1.1}
+\contentsline {subsection}{\numberline {A.1.2}Sample Simulation Configuration file}{68}{subsection.A.1.2}
+\contentsline {section}{\numberline {A.2}Validation Materials}{68}{section.A.2}
+\contentsline {subsection}{\numberline {A.2.1}Passenger Arrival Schedule}{68}{subsection.A.2.1}
+\contentsline {subsection}{\numberline {A.2.2}Trace Table}{69}{subsection.A.2.2}
+\contentsline {chapter}{\numberline {B}Materials referred to in \autoref {teschapter}}{72}{appendix.B}
+\contentsline {section}{\numberline {B.1}Validation Materials}{72}{section.B.1}
+\contentsline {subsection}{\numberline {B.1.1}Passenger Arrival Schedule}{72}{subsection.B.1.1}
+\contentsline {subsection}{\numberline {B.1.2}Trace Table}{73}{subsection.B.1.2}

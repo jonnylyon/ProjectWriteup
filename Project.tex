@@ -19,23 +19,34 @@
 %\date{6th May 2014}
 \supervisor{Dr Alan M Frisch}
 \BEng
-\wordcount{Word Count}
+\wordcount{24,302 (draft)}
 \dedication{}
 \acknowledgements{I would like to thank my supervisor, Dr Alan Frisch, for his helpful and encouraging advice and guidance during the course of this project, as well as my family, housemates and friends for their ongoing support.}
-\abstract{Abstract to go here}
+\abstract{Abstract not yet written}
 
 \def\rot{\rotatebox}
 
 \begin{document}
+\renewcommand{\thepage}{\roman{page}}
 \maketitle 
 
+\setcounter{page}{0}
 \part{Introduction}
+\renewcommand{\thepage}{\arabic{page}}
 
 \chapter{Introduction}
 
 \section{Introduction}
 
-Introduction will be going in here.
+The elevator scheduling problem is one that is often completely overlooked by the average elevator user, but it is one of huge importance to the development of modern cities and population centres.  London, New York, Tokyo and indeed all of the world's major cities can be recognised by their dominating skylines, which come about from a need to make more and more efficient use of limited land area by building upwards.  Without the development of safe and efficient elevators to transport people up and down these massive structures, the buildings simply could not operate effectively.
+
+The nature and use of these buildings is such that required elevator capacity rises superlinearly with respect to the number of floors; due to the probably linear increases in both number of people to transport, and in average journey times, we can imagine that in the general case required elevator capacity rises quadratically with the number of floors.  This means that, in order for taller and taller buildings to remain feasible, we must continue to come up with ways to further improve the capacity that can be gained without requiring too many shafts.  Indeed, just two weeks before the submission of this report, it was announced that lift manufacturer Hitachi plan to install lifts capable of travelling at 72km/h (45mph) in a new skyscraper in Guangzhou, China, requiring innovations to automatically alter air pressure inside the car to avoid causing pain to passengers \citep{BBC2014}.
+
+One such innovation, marketed as TWIN by Thyssenkrupp, is the concept of having two cars in the same shaft (TCOS).  This brings benefits of having two independently moving cars that can each serve the whole height of the building (with the exception of the top floor for the lower car) serving passengers independently, using the same land space of just one traditional car.  However, it is a more complicated scheduling problem than the traditional case, due to the fact that cars have to interact with one another in order to avoid colliding.
+
+TCOS installations use Destination Control, a system in which passengers give their destination at the time of first registering a call for a lift, in contrast to traditional systems whereby they initially just state their intended direction of travel.  This allows the lift controller to make more reliable and efficient decisions about which car to serve the call with.
+
+This aim of this project is to develop and evaluate scheduling methods for TCOS installations with Destination Control.  This will involve the implementation of a simulator on which to evaluate the performance of various algorithms.
 
 \section{Outline of Report}
 
@@ -421,14 +432,23 @@ The behaviour of cars is governed precisely by the following three rules:
 
 \subsubsection{Control Logic}
 
-Since the decision was made to use a discrete event-based simulation, it was necessary to consider how the movement of the cars, which is inherently continuous, could be represented meaningfully in a discrete manner.  While developing a dynamic programming approach to elevator scheduling, \citet{Nikovski2003} present a discretised model of the state space of an elevator car in terms of its position in the shaft (see \autoref{LitRevESADP}), which has been adapted for use in this simulator.  If one considers the two parameters of the continuous state space to be current speed and vertical position in the shaft then, given that the car will have some pre-determined maximum speed and rates of acceleration and deceleration, it can be seen that the car will follow certain fixed paths around this state space.
+Since the decision was made to use a discrete event-based simulation, it was necessary to consider how the movement of the cars, which is inherently continuous, could be represented meaningfully in a discrete manner.  While developing a dynamic programming approach to elevator scheduling, \citet{Nikovski2003} present a discretised model of the state space of an elevator car in terms of its position in the shaft (see \autoref{LitRevESADP}), which has been adapted for use in this simulator.  If one considers the two parameters of the continuous state space to be current speed and vertical position in the shaft then, given that the car will have some pre-determined maximum speed and rates of acceleration and deceleration, it can be seen that the car will follow certain fixed paths around this state space.  This is shown for an upward-travelling car in \autoref{shaftbranching}, where the red dots represent `decision points' - the moments at which the car must decided whether or not to stop at a floor.
 
-\autoref{shaftstates} gives an example of a possible state space for an upward-travelling car, where the red dots represent the states, the green lines the transitions between states, and the blue lines the paths of deceleration from each state to its associated floor.  Each state can be thought of as a decision-point for its associated floor, at which the car decides whether to start slowing down in order to stop at the associated floor, or to carry on travelling upwards to the next decision point).  In this example, the floors are spaced evenly, but one can imagine how the states might look otherwise.  In any case, since each state lies on one of the blue deceleration paths, the parameters of a state can be determined from the floor with which it is associated, the movement speed associated with the state, and the specified rate of deceleration of the car.  A similar diagram could be drawn for a downward-moving car.
+\autoref{shaftstates} shows how the red decision points are used as a discrete state space.  Each green, blue or brown line represents a possible transition from one state to another.  Arrowheads are omitted from the transition lines for convenience, but the transitions are always in an upward direction for an upward-travelling car.  Green transition lines represent transitions where the car is accelerating, brown ones where the car is decelerating, and blue ones where the car is travelling at a constant speed (the maximum speed for the car).  At each state (decision point) the car must decide whether to start slowing down in order to stop at the next available floor, or to carry on travelling upwards to the decision point for the next floor.  The parameters of each state can be determined from the floor with which it is associated (by the deceleration curves in \autoref{shaftbranching}), the speed of movement represented by the state, and the specified rate of deceleration of the car.  In this example, the floors are spaced evenly, but one can imagine how the states might look otherwise.  A similar diagram could be drawn for a downward-moving car.
+
+It should be noted that when a car decides to stop at a floor, it transitions directly to the stopped state of that floor, hence the rather strange looking shape of transitions at the top of \autoref{shaftstates}.
+
+\begin{figure} [h]
+	\centering
+	\includegraphics{shaft_branching_points.png}
+	\caption{The paths through the continuous state space of an upward-travelling elevator car, with branching/decision points marked in red.}
+	\label{shaftbranching}
+\end{figure}
 
 \begin{figure} [h]
 	\centering
 	\includegraphics{shaft_state_space.png}
-	\caption{The discretised state space of an upward-travelling elevator car}
+	\caption{The discretised state space of an upward-travelling elevator car.  Green lines represent accelerating transitions, with brown lines decelerating and blue lines representing the maximum speed.}
 	\label{shaftstates}
 \end{figure}
 

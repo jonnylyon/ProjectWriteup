@@ -340,7 +340,7 @@ The following is a list of requirements that had to be met by the Core Elevator 
 
 The requirements above can be justified as follows.
 
-The various evaluation objectives specified in requirement 1 are provided to allow for scenario-specific interpretation of the results.  For example, previous literature has demonstrated that in some cases one algorithm can outperform a second algorithm in terms of objective a (average waiting time), while the second can be better in terms of objective b (average time to destination) \textbf{[CITATION]}.  Clearly the decision as to whether the first or second algorithm is better depends on which of the objectives is deemed to be most important in the scenario.  Objectives c and d are provided because they penalise times superlinearly, thus preferring a narrower spread of results over a broader one where the raw averages are similar.  The provision of objectives e and f (when combined with a and b respectively) also allows the user to make inferences about the spread of results, but has the advantage that the user is dealing with intuitively meaningful figures, whereas the figures given by c and d (though more useful for blind ranking of algorithms) are somewhat meaningless without some manipulation.  In addition to these reasons, all evaluation objectives are provided for consistency with existing literature.
+The various evaluation objectives specified in requirement 1 are provided to allow for scenario-specific interpretation of the results.  For example, previous literature has demonstrated that in some cases one algorithm can outperform a second algorithm in terms of objective a (average waiting time), while the second can be better in terms of objective b (average time to destination) \citep{Bao1994}.  Clearly the decision as to whether the first or second algorithm is better depends on which of the objectives is deemed to be most important in the scenario.  Objectives c and d are provided because they penalise times superlinearly, thus preferring a narrower spread of results over a broader one where the raw averages are similar.  The provision of objectives e and f (when combined with a and b respectively) also allows the user to make inferences about the spread of results, but has the advantage that the user is dealing with intuitively meaningful figures, whereas the figures given by c and d (though more useful for blind ranking of algorithms) are somewhat meaningless without some manipulation.  In addition to these reasons, all evaluation objectives are provided for consistency with existing literature.
 
 The parameters specified in requirement 2 are required firstly to allow the general purpose simulator to be used to model many different systems as might be appropriate.  For example, it is likely that the normal parameters of a TCOS installation are different to the normal parameters of a traditional installation as service speeds are likely to be more critical in those contexts.  Secondly, they are provided to allow the simulator to be used for verification of results in previous literature, which is not generally consistent about these parameters.
 
@@ -1012,7 +1012,7 @@ After I had corrected this aspect of the code, I ran the simulation again and fo
 
 \begin{figure} [h]
 	\centering
-	\includegraphics{tcos_validation_movement_graph.png}
+	\includegraphics[width=\linewidth,keepaspectratio]{tcos_validation_movement_graph.png}
 	\caption{The movement of the two cars during the validating simulation run}
 	\label{tcosvalidationgraph}
 \end{figure}

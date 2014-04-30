@@ -12,6 +12,7 @@
 \usepackage{pgfplots}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage[colorinlistoftodos]{todonotes}
 
 \usetikzlibrary{arrows,automata}
 
@@ -370,28 +371,6 @@ The passenger arrival schedule (requirements 4 and 5) must be generated randomly
 
 While existing literature generally only uses individual Passengers in its simulations, this simulator will use Passenger Groups consisting of multiple Passengers.  This is because Destination Control systems allow a group of passengers to come to the console and specify that they are a group of n people, and they must then be kept together for their journey.  Two people might arrive at the same place with the same destination but not be part of the same group, in this case they will be treated as independent passengers in the simulation.
 
-\section{Technology Decisions}
-
-It was decided that the Core Elevator Simulator would be developed in C\#, taking advantage of the C\# experience gained on previous projects by both me and Craig.  There were several reasons for this.  Firstly, the elevator domain can be very conveniently represented in an object-oriented fashion.  Secondly, it was considered important that we use a strongly-typed compiled language to minimise the risk of undetected errors in the code.  Thirdly, we felt that some features of the C\# syntax would come in very useful during the project, specifically Properties and LINQ expressions.  Finally, we did not consider that the benefits of other languages (e.g. Java) such as cross-platform compatibility and being open-source were relevant to our project.
-
-We decided that configuration files should use an XML format, as this is widely understood by the Computer Science community, and because there are built-in libraries for handling XML files within C\#.
-
-\section{Architecture}
-
-The first architecture decision made was whether to use a discrete event-based simulator or a `continuous' time-sliced simulator.  An event-based simulation works by determining the times at which the state of the domain model changes and skipping directly from one such time to the next, assuming that no changes occur in the meantime, while a time-sliced simulation breaks the simulation time into small slices and computes the behaviour of the system during each slice, even if nothing happens \citep{Matloff2008}.  It was initially assumed that a time-sliced one would be used since it would provide a more conceptually accurate model of the real world domain and thus be convenient to understand while developing and maintaining the tool.  However, it was noted that this method had the problem of being very time-consuming and resource-intensive.  For example, if the model were to enter an idle state, it would be necessary for the simulation to work through every time slice waiting for some event to happen (i.e. the arrival of a passenger) that would cause the state of the system to change.  This would seem to be a very inefficient use of resources.
-
-The event-driven approach would overcome this issue by moving the simulation time directly from one event to the next, only needing to perform computations at times when the state of the system changed.  However, this added the complication that the domain system, which is inherently continuous, needed to be represented in a discrete but meaningful and practical manner.  Another issue with the event-driven approach was that it would make it much harder to include a real-time visualisation of the simulation, and that such a visualisation would have to be generated retrospectively from some log of the events.  However, as there was no requirement to implement any visualisation the decision was made to go ahead with an event-based simulator for its performance benefits.
-
-The general architecture of the tool consists of two main logic components, which will be described in greater detail later on.  These two components are kept largely independent, allowing easier testing of each one.  The first component is the domain model.  The domain model performs all computations about the behaviour of the elevator group system, including decisions about lift movements, etc. and these decisions are all based purely on the current state of each individual car and the calls that are currently allocated to that car.  The second component is the allocator.  The purpose of the allocator is simply to allocate passenger hall calls to elevator cars in the domain model.  The allocator is aware of the full state of the domain model, and may use any state information in its allocation decisions, however it cannot directly modify the state.  The only other interaction between the two components is for the allocator to allocate hall calls to specific cars within the domain model.
-
-A third component is the agenda and main control loop.  The agenda contains two types of events: those pertaining to passenger arrivals (i.e. hall calls), and those to state changes of specific cars in the domain model.  The control loop pulls each event off of the agenda in order of timestamp, and triggers either the allocator or a car in the domain model to act upon them as appropriate.  Each of these events is handled synchronously; all of the computation pertaining to one event occurs before the next event is taken from the agenda.
-
-The final notable component is the passenger distribution generator which, as per the requirements, generates passenger arrival schedules based on Poisson distributions as configured by the user.
-
-Other uninteresting components include the simulation configuration loader, which parses the XML simulation configuration file, and the logger which writes content into a log file and (optionally) prints them to the console at run time.
-
-A significant decision had to be made about how different allocators could be written and used with the simulator.  One possibility was that allocation algorithms could be written separately and compiled to Dynamic Linked Libraries (DLL), which could then be dynamically pulled into the simulator at runtime, but this had the problem that the allocators would then not be able to have any memory of their own, which might be desirable for algorithms involving learning.  Another possibility was to do it the other way around -- to have the allocator pull the simulation logic in as a DLL -- but then the memory of the domain model would have to be passed around via the allocator all the time, breaking some of the cohesion and making the domain logic slightly harder.  After discussion with Alan Frisch, it was decided that, for the time being, the different allocators would simply be built into the same executable as the rest of the simulator and, should another allocator be added, the system would need to be recompiled.
-
 \section{Domain Assumptions}
 
 In order to simplify the logic used in the implementation of the simulator, the following assumptions were made about the domain:
@@ -411,8 +390,24 @@ In order to simplify the logic used in the implementation of the simulator, the 
 		\item In a Destination Control system, if a Passenger Group is assigned to a car which turns out not have enough capacity to accommodate the group when it arrives, the entire group will wait at the floor until the same car comes back again.  Allocators should not allocate passengers to cars which cannot accommodate them.
 		\item Passenger Groups will not contain more people than can be accommodated by the smallest car when it is otherwise empty.
 	\end{itemize}
+	
+\section{Conceptual Design}
 
-\section{Detailed Description of Components}
+\subsection{General Architecture}
+
+The first architecture decision made was whether to use a discrete event-based simulator or a `continuous' time-sliced simulator.  An event-based simulation works by determining the times at which the state of the domain model changes and skipping directly from one such time to the next, assuming that no changes occur in the meantime, while a time-sliced simulation breaks the simulation time into small slices and computes the behaviour of the system during each slice, even if nothing happens \citep{Matloff2008}.  It was initially assumed that a time-sliced one would be used since it would provide a more conceptually accurate model of the real world domain and thus be convenient to understand while developing and maintaining the tool.  However, it was noted that this method had the problem of being very time-consuming and resource-intensive.  For example, if the model were to enter an idle state, it would be necessary for the simulation to work through every time slice waiting for some event to happen (i.e. the arrival of a passenger) that would cause the state of the system to change.  This would seem to be a very inefficient use of resources.
+
+The event-driven approach would overcome this issue by moving the simulation time directly from one event to the next, only needing to perform computations at times when the state of the system changed.  However, this added the complication that the domain system, which is inherently continuous, needed to be represented in a discrete but meaningful and practical manner.  Another issue with the event-driven approach was that it would make it much harder to include a real-time visualisation of the simulation, and that such a visualisation would have to be generated retrospectively from some log of the events.  However, as there was no requirement to implement any visualisation the decision was made to go ahead with an event-based simulator for its performance benefits.
+
+The general architecture of the tool consists of two main logic components, which will be described in greater detail later on.  These two components are kept largely independent, allowing easier testing of each one.  The first component is the domain model.  The domain model performs all computations about the behaviour of the elevator group system, including decisions about lift movements, etc. and these decisions are all based purely on the current state of each individual car and the calls that are currently allocated to that car.  The second component is the allocator.  The purpose of the allocator is simply to allocate passenger hall calls to elevator cars in the domain model.  The allocator is aware of the full state of the domain model, and may use any state information in its allocation decisions, however it cannot directly modify the state.  The only other interaction between the two components is for the allocator to allocate hall calls to specific cars within the domain model.
+
+A third component is the agenda and main control loop.  The agenda contains two types of events: those pertaining to passenger arrivals (i.e. hall calls), and those to state changes of specific cars in the domain model.  The control loop pulls each event off of the agenda in order of timestamp, and triggers either the allocator or a car in the domain model to act upon them as appropriate.  Each of these events is handled synchronously; all of the computation pertaining to one event occurs before the next event is taken from the agenda.
+
+The final notable component is the passenger distribution generator which, as per the requirements, generates passenger arrival schedules based on Poisson distributions as configured by the user.
+
+Other uninteresting components include the simulation configuration loader, which parses a simulation configuration file containing all parameters of the simulation run, and the logger which writes content into a log file and (optionally) prints them to the console at run time.  Configuration files use an XML format, which was chosen as it is widely understood by the Computer Science community, and because there are built-in libraries for handling XML files within C\#.
+
+A significant decision had to be made about how different allocators could be written and used with the simulator.  One possibility was that allocation algorithms could be written separately and compiled to Dynamic Linked Libraries (DLL), which could then be dynamically pulled into the simulator at runtime, but this had the problem that the allocators would then not be able to have any memory of their own, which might be desirable for algorithms involving learning.  Another possibility was to do it the other way around -- to have the allocator pull the simulation logic in as a DLL -- but then the memory of the domain model would have to be passed around via the allocator all the time, breaking some of the cohesion and making the domain logic slightly harder.  After discussion with Alan Frisch, it was decided that, for the time being, the different allocators would simply be built into the same executable as the rest of the simulator and, should another allocator be added, the system would need to be recompiled.
 
 \subsection{Domain Model Component}
 
@@ -781,91 +776,15 @@ The Stopping state applies when the car is moving, has reached a decision point,
 \subsection{Allocator Component}
 \label{coresimallocatordescription}
 
-The Allocator component in the Core Elevator Simulator consists of an Interface class, named IAllocator, defining the methods that an Allocator implemented by the user must include.  In fact, the IAllocator interface is very simple and contains just one method which is called by the main control loop when a new PassengerGroup arrival is taken from the agenda:
+The Allocator component in the Core Elevator Simulator consists of an Interface class, named IAllocator, defining the methods that an Allocator implemented by the user must include.  In fact, the IAllocator interface is very simple and contains just one method which is called by the main control loop when a new PassengerGroup arrival is taken from the agenda.  This method is called AllocateCall and takes as parameters the group that is to be allocated and the building containing the shafts and cars.  The AllocateCall method must make the decision about which car to allocate the call to, as per the allocation method used.  Having selected the car, it must call a method within the car named AllocateHallCall and pass in a HallCall object instantiated with the group under allocation.
 
-\lstset{language=[Sharp]C, basicstyle=\ttfamily\tiny, breaklines=true, breakatwhitespace=true }
-\begin{lstlisting}
-interface IAllocator
-{
-	/// <summary>
-	/// Allocates a given group of passengers to a specific car within
-	/// the given building, based on the relevant allocation method
-	/// </summary>
-	/// <param name="group">The PassengerGroup to be allocated</param>
-	/// <param name="building">The Building holding the domain model</param>
-	void AllocateCall(PassengerGroup group, Building building);
-}
-\end{lstlisting}
-
-There is also an enum class, AllocatorType, which defines the names of all of the allocators.  Then, there is a static method which takes a specific AllocatorType enum value and returns an instance of the relevant Allocator as implemented by the user.
-
-In order to demonstrate the ease with which a new Allocator can be added, I will include an example of a very simple allocation algorithm, the ClosestCar algorithm, which simply allocates each call to whichever car is closest to the call at the time the call is made, ignoring the directions in which cars are moving.
-
-Firstly, the user must create a new class, which implements IAllocator.  As described, the AllocateCall method must be implemented, as follows:
-
-\begin{lstlisting}
-class ClosestCarAllocator : IAllocator
-{
-	/// <summary>
-	/// Allocates a given group of passengers to a specific car within
-	/// the given building, based on the ClosestCar allocation method
-	/// </summary>
-	/// <param name="group">The PassengerGroup to be allocated</param>
-	/// <param name="building">The Building holding the domain model</param>
-	public void AllocateCall(PassengerGroup group, Building building)
-	{
-		// compile list of all cars
-		List<ICar> cars = new List<ICar>();
-		building.Shafts.ForEach(s => s.Cars.ForEach(c => cars.Add(c)));
-		// get closest car
-		var car = cars.OrderBy(c => Math.Abs(c.State.Floor - group.Origin)).First();
-		// allocate call
-		car.allocateHallCall(new HallCall(group));
-	
-		// update the PassengerGroup data with the time at which
-		// the hall call was made
-		group.changeState(PassengerState.Waiting, Simulation.agenda.getCurrentSimTime());
-	}
-}
-\end{lstlisting}
-
-Secondly, the name of the Allocator must be added to the AllocatorType enum:
-
-\begin{lstlisting}
-enum AllocatorType
-{
-	Manual,
-	Random,
-	ClosestCar
-}
-\end{lstlisting}
-
-Finally, the new Allocator must be added to the mapping method:
-
-\begin{lstlisting}
-public static IAllocator getAllocator(AllocatorType allocator)
-{
-	switch (allocator)
-	{
-		case AllocatorType.Manual:
-			return new ManualAllocator.ManualAllocator();
-		case AllocatorType.Random:
-			return new RandomAllocator.RandomAllocator();
-		case AllocatorType.ClosestCar:
-			return new ClosestCarAllocator.ClosestCarAllocator();
-	}
-	
-	return null;
-}
-\end{lstlisting}
-
-Once the user has performed these three steps, the simulator can be recompiled and the new Allocator can be used.
+An enum class, AllocatorType, defines the names of all the allocators.  A static method, GetAllocator, takes an AllocatorType enum value and returns an instance of the relevant IAllocator class implemented by the user.
 
 \subsection{Passenger Distribution Generator}
 
 The purpose of the Passenger Distribution generator is to load an XML `specification' file, which contains the parameters of the Poisson distributions for the various floors.  Based on this, it outputs a second XML file containing a list of specific passenger groups, with their arrival times, sizes, origins and destinations.  The arrival times of these passenger groups should follow the relevant Poisson distributions as taken from the specification file.  An example specification file is shown below.
 
-\lstset{language=XML}
+\lstset{language=XML, basicstyle=\ttfamily\tiny, breaklines=true, breakatwhitespace=true}
 \begin{lstlisting}
 <ArrivalFloors>
 	<ArrivalFloor Floor="0">
@@ -968,6 +887,94 @@ All parameters of a simulation run are specified in a single configuration file,
 	\end{itemize}
 	\item The path to a \textbf{Log File} -- the user can specify `auto' here, in which case an automatic file name will be generated based on the current date and time.
 \end{itemize}
+
+\section{Implementation}
+
+Craig and I implemented the conceptual design above using C\#.  The fine details of implementation, such as class structure and actual code, are not generally of interest, and as such I will not go into them in this report.  The exception to this is the Allocator component, which is to be modified by users when they add new allocation algorithms to the simulator.  In this section I will describe the reasons for using C\# and then present an example of adding a new allocation algorithm.
+
+\subsection{Technology Decisions}
+
+It was decided that the Core Elevator Simulator would be developed in C\#, taking advantage of the C\# experience gained on previous projects by both me and Craig.  There were several reasons for this.  Firstly, the elevator domain can be very conveniently represented in an object-oriented fashion.  Secondly, it was considered important that we use a strongly-typed compiled language to minimise the risk of undetected errors in the code.  Thirdly, we felt that some features of the C\# syntax would come in very useful during the project, specifically Properties and LINQ expressions.  Finally, we did not consider that the benefits of other languages (e.g. Java) such as cross-platform compatibility and being open-source were relevant to our project.
+
+\subsection{Adding a New Allocator}
+
+In order to demonstrate the ease with which a new Allocator can be added, I will include an example of a very simple allocation algorithm, the ClosestCar algorithm, which simply allocates each call to whichever car is closest to the call at the time the call is made, ignoring the directions in which cars are moving.
+
+The following IAllocator interface defines the methods that each Allocator class must have, as described in \autoref{coresimallocatordescription}.
+
+\lstset{language=[Sharp]C, basicstyle=\ttfamily\tiny, breaklines=true, breakatwhitespace=true }
+\begin{lstlisting}
+interface IAllocator
+{
+	/// <summary>
+	/// Allocates a given group of passengers to a specific car within
+	/// the given building, based on the relevant allocation method
+	/// </summary>
+	/// <param name="group">The PassengerGroup to be allocated</param>
+	/// <param name="building">The Building holding the domain model</param>
+	void AllocateCall(PassengerGroup group, Building building);
+}
+\end{lstlisting}
+
+The first thing to do is to create the new Allocator class.  The example ClosestCarAllocator, implementing IAllocator, is shown below:
+
+\begin{lstlisting}
+class ClosestCarAllocator : IAllocator
+{
+	/// <summary>
+	/// Allocates a given group of passengers to a specific car within
+	/// the given building, based on the ClosestCar allocation method
+	/// </summary>
+	/// <param name="group">The PassengerGroup to be allocated</param>
+	/// <param name="building">The Building holding the domain model</param>
+	public void AllocateCall(PassengerGroup group, Building building)
+	{
+		// compile list of all cars
+		List<ICar> cars = new List<ICar>();
+		building.Shafts.ForEach(s => s.Cars.ForEach(c => cars.Add(c)));
+		// get closest car
+		var car = cars.OrderBy(c => Math.Abs(c.State.Floor - group.Origin)).First();
+		// allocate call
+		car.AllocateHallCall(new HallCall(group));
+	
+		// update the PassengerGroup data with the time at which
+		// the hall call was made
+		group.ChangeState(PassengerState.Waiting, Simulation.agenda.GetCurrentSimTime());
+	}
+}
+\end{lstlisting}
+
+Secondly, the name of the Allocator must be added to the AllocatorType enum:
+
+\begin{lstlisting}
+enum AllocatorType
+{
+	Manual,
+	Random,
+	ClosestCar
+}
+\end{lstlisting}
+
+Finally, the new Allocator must be added to the mapping method:
+
+\begin{lstlisting}
+public static IAllocator GetAllocator(AllocatorType allocator)
+{
+	switch (allocator)
+	{
+		case AllocatorType.Manual:
+			return new ManualAllocator.ManualAllocator();
+		case AllocatorType.Random:
+			return new RandomAllocator.RandomAllocator();
+		case AllocatorType.ClosestCar:
+			return new ClosestCarAllocator.ClosestCarAllocator();
+	}
+	
+	return null;
+}
+\end{lstlisting}
+
+Once the user has performed these three steps, the simulator can be recompiled and the new Allocator can be used.  In order to use the new Allocator, the user should use the AllocatorType enum value for the new Allocator in the Allocator field of the simulation configuration file.
 
 \section{Validation}
 

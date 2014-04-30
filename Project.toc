@@ -40,23 +40,25 @@
 \contentsline {subsubsection}{\nonumberline Functional Requirements}{17}{section*.17}
 \contentsline {subsubsection}{\nonumberline Non-Functional Requirements}{18}{section*.18}
 \contentsline {subsection}{\numberline {3.2.2}Justification of Requirements}{18}{subsection.3.2.2}
-\contentsline {section}{\numberline {3.3}Technology Decisions}{19}{section.3.3}
-\contentsline {section}{\numberline {3.4}Architecture}{19}{section.3.4}
-\contentsline {section}{\numberline {3.5}Domain Assumptions}{21}{section.3.5}
-\contentsline {section}{\numberline {3.6}Detailed Description of Components}{22}{section.3.6}
-\contentsline {subsection}{\numberline {3.6.1}Domain Model Component}{22}{subsection.3.6.1}
-\contentsline {subsubsection}{\nonumberline Control Logic}{23}{section*.20}
-\contentsline {subsubsection}{\nonumberline Movement Mathematics}{25}{section*.23}
+\contentsline {section}{\numberline {3.3}Domain Assumptions}{19}{section.3.3}
+\contentsline {section}{\numberline {3.4}Conceptual Design}{20}{section.3.4}
+\contentsline {subsection}{\numberline {3.4.1}General Architecture}{20}{subsection.3.4.1}
+\contentsline {subsection}{\numberline {3.4.2}Domain Model Component}{21}{subsection.3.4.2}
+\contentsline {subsubsection}{\nonumberline Control Logic}{22}{section*.20}
+\contentsline {subsubsection}{\nonumberline Movement Mathematics}{24}{section*.23}
 \contentsline {paragraph}{\nonumberline Moving state}{26}{section*.24}
-\contentsline {paragraph}{\nonumberline Leaving state}{28}{section*.27}
+\contentsline {paragraph}{\nonumberline Leaving state}{27}{section*.27}
 \contentsline {paragraph}{\nonumberline Stopping state}{28}{section*.30}
-\contentsline {subsection}{\numberline {3.6.2}Allocator Component}{28}{subsection.3.6.2}
-\contentsline {subsection}{\numberline {3.6.3}Passenger Distribution Generator}{30}{subsection.3.6.3}
+\contentsline {subsection}{\numberline {3.4.3}Allocator Component}{28}{subsection.3.4.3}
+\contentsline {subsection}{\numberline {3.4.4}Passenger Distribution Generator}{29}{subsection.3.4.4}
 \contentsline {subsubsection}{\nonumberline Generating values with a Poisson distribution}{30}{section*.31}
-\contentsline {subsection}{\numberline {3.6.4}Simulation Configuration}{31}{subsection.3.6.4}
-\contentsline {section}{\numberline {3.7}Validation}{32}{section.3.7}
-\contentsline {subsection}{\numberline {3.7.1}Domain Model Component}{32}{subsection.3.7.1}
-\contentsline {subsection}{\numberline {3.7.2}Allocator Component}{33}{subsection.3.7.2}
+\contentsline {subsection}{\numberline {3.4.5}Simulation Configuration}{30}{subsection.3.4.5}
+\contentsline {section}{\numberline {3.5}Implementation}{31}{section.3.5}
+\contentsline {subsection}{\numberline {3.5.1}Technology Decisions}{31}{subsection.3.5.1}
+\contentsline {subsection}{\numberline {3.5.2}Adding a New Allocator}{31}{subsection.3.5.2}
+\contentsline {section}{\numberline {3.6}Validation}{32}{section.3.6}
+\contentsline {subsection}{\numberline {3.6.1}Domain Model Component}{33}{subsection.3.6.1}
+\contentsline {subsection}{\numberline {3.6.2}Allocator Component}{34}{subsection.3.6.2}
 \contentsline {chapter}{\numberline {4}TCOS Elevator Simulator}{35}{chapter.4}
 \contentsline {section}{\numberline {4.1}Introduction}{35}{section.4.1}
 \contentsline {section}{\numberline {4.2}Additional Requirements}{35}{section.4.2}

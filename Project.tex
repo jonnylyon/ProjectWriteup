@@ -15,12 +15,14 @@
 \usepackage[titletoc]{appendix}
 \usepackage[colorinlistoftodos]{todonotes}
 
+\newcommand*{\Appendixautorefname}{appendix}
+
 \usetikzlibrary{arrows,automata}
 
 \graphicspath{{project_graphics/}}
 
 \author{Jonathan Lyon}
-\title{Algorithms for Two-Cars-in-One-Shaft Elevator Control}
+\title{Development and Simulation of Allocation Algorithms for Two-Cars-in-One-Shaft Elevator Group Systems}
 %\date{6th May 2014}
 \supervisor{Dr Alan M Frisch}
 \BEng
@@ -50,11 +52,11 @@ The elevator scheduling problem is one that is often completely overlooked by th
 
 The nature and use of these buildings is such that required elevator capacity rises superlinearly with respect to the number of floors; due to the probably linear increases in both number of people to transport, and in average journey times, we can imagine that in the general case required elevator capacity rises quadratically with the number of floors.  This means that, in order for taller and taller buildings to remain feasible, we must continue to come up with ways to further improve the capacity that can be gained without requiring too many shafts.  Indeed, just two weeks before the submission of this report, it was announced that lift manufacturer Hitachi plan to install lifts capable of travelling at 72km/h (45mph) in a new skyscraper in Guangzhou, China, requiring innovations to automatically alter air pressure inside the car to avoid causing pain to passengers \citep{BBC2014}.
 
-One such innovation, marketed as TWIN by Thyssenkrupp, is the concept of having two cars in the same shaft (TCOS).  This brings benefits of having two independently moving cars that can each serve the whole height of the building (with the exception of the top floor for the lower car) serving passengers independently, using the same land space of just one traditional car.  However, it is a more complicated scheduling problem than the traditional case, due to the fact that cars have to interact with one another in order to avoid colliding.
+One such innovation, marketed as TWIN by Thyssenkrupp, is the concept of having two cars in the same shaft (TCOS).  This brings benefits of having two separate cars serving passengers independently, using the same land space of just one traditional car.  However, it is a more complicated scheduling problem than the traditional case, due to the fact that cars have to interact with one another in order to avoid colliding.  While the lower car cannot visit the top floor, the upper car can visit the lowest floor due to the provision of a `garage' floor below the lowest floor at which the lower car can wait.
 
-TCOS installations use Destination Control, a system in which passengers give their destination at the time of first registering a call for a lift, in contrast to traditional systems whereby they initially just state their intended direction of travel.  This allows the lift controller to make more reliable and efficient decisions about which car to serve the call with.
+TCOS installations use Destination Control, a system in which passengers give their destination at the time of first registering a call for a lift, in contrast to traditional systems whereby they initially just state their intended direction of travel.  This allows the lift controller to make more reliable and efficient decisions about which car should be allocated to serve each call.
 
-This aim of this project is to develop and evaluate scheduling methods for TCOS installations with Destination Control.  This will involve the implementation of a simulator on which to evaluate the performance of various algorithms.
+In this project, scheduling methods are developed and evaluated for TCOS installations with Destination Control.  This involves the implementation of a simulator on which the performance of various algorithms is tested in relation to four of the main types of traffic typically experienced by large buildings as well as a number of popular performance criteria.  Different approaches are shown to be variously successful depending on the specific criteria of interest, and it is ultimately demonstrated that TCOS systems give significant improvements over traditional systems in the cases tested.
 
 \section{Outline of Report}
 
@@ -393,6 +395,7 @@ In order to simplify the logic used in the implementation of the simulator, the 
 \section{Conceptual Design}
 
 \subsection{General Architecture}
+\label{cesarchitecture}
 
 The first architecture decision made was whether to use a discrete event-based simulator or a `continuous' time-sliced simulator.  An event-based simulation works by determining the times at which the state of the domain model changes and skipping directly from one such time to the next, assuming that no changes occur in the meantime, while a time-sliced simulation breaks the simulation time into small slices and computes the behaviour of the system during each slice, even if nothing happens \citep{Matloff2008}.  It was initially assumed that a time-sliced one would be used since it would provide a more conceptually accurate model of the real world domain and thus be convenient to understand while developing and maintaining the tool.  However, it was noted that this method had the problem of being very time-consuming and resource-intensive.  For example, if the model were to enter an idle state, it would be necessary for the simulation to work through every time slice waiting for some event to happen (i.e. the arrival of a passenger) that would cause the state of the system to change.  This would seem to be a very inefficient use of resources.
 
@@ -1118,6 +1121,7 @@ As with option 1, the park floors for the upper and lower cars should be the hig
 Option 3 is more efficient than option 1 in that it allows some feasible call allocations that option 1 does not allow.  However, it manages to extend the possibilities without contravening the passenger expectation constraints or the conceptual logic architecture of the simulator.
 
 \subsection{Option 4: Extended Overlapping Dynamic Zoning Approach}
+\label{tesoption4}
 
 The fourth option considers that a car's zone is the minimal set of floors that contains (a) the current floor of the car, (b) the car's park floor, and (c) all floors that the car will visit before its next reversal.  This is different from the zones defined in options 3 and 4 as it only includes the calls in P1 and, if it is beyond the furthest location of all P1 calls, the first call in P2.
 
@@ -1148,16 +1152,16 @@ In this section I will describe the changes that were necessary in order to exte
 
 There was a large amount of logic that needed to be added to the Domain Model in the TCOS Elevator Simulator.  In order to maintain the generality of the simulator (so that it could still be used for simulations including traditional elevator shafts as well as TCOS shafts) a new TCOSCar class was added, and the traditional Car class was left largely unchanged.  The Core Elevator Simulator had been designed such that the traditional Car class implemented an interface, ICar, and all interactions with the Car were via the ICar interface.  This meant that the TCOSCar class simply needed to interface the ICar interface in order to be compatible with the rest of the program.
 
-Since the Extended Overlapping Zoning Approach (option 4, discussed above) requires that a TCOS car can reject call allocations, it was necessary to modify the ICar interface slightly so that the allocateHallCall method, called by Allocators to allocate a call to a car, returned a Boolean value indicating the success (true) or failure (false) of the allocation.  The traditional Car class had to be modified accordingly, simply returning true (for success) in all cases.
+Since the Extended Overlapping Zoning Approach (EOZA) (\autoref{tesoption4}) requires that a TCOS car can reject call allocations, it was necessary to modify the ICar interface slightly so that the allocateHallCall method, called by Allocators to allocate a call to a car, returned a Boolean value indicating the success (true) or failure (false) of the allocation.  The traditional Car class had to be modified accordingly, simply returning true (for success) in all cases.
 
-Aside from the minor `housekeeping' changes described above, the following three methods were added in the TCOS implementation, corresponding to certain aspects of logic in option 4:
+Aside from the minor `housekeeping' changes described above, the following three methods were added in the TCOS implementation, corresponding to certain aspects of logic in the EOZA:
 	\begin{description}
-		\item[CanAcceptHallCall] Based on the rules described in option 4, this method works out whether or not a call can be accepted at the current time, based on the circumstances of both cars in the shaft and the calls currently allocated to them.
+		\item[CanAcceptHallCall] Based on the rules described in EOZA, this method works out whether or not a call can be accepted at the current time, based on the circumstances of both cars in the shaft and the calls currently allocated to them.
 		\item[CanMoveToNextFloor] This method works out whether or not the car is permitted to move forward to the next floor.  This is necessary because a car cannot enter the overlap zone while the other car is within it.
-		\item[MustContinueInCurrentDirection] This method works out whether or not the car must continue forward in order to allow the other car to visit its calls, even if this car needs to reverse before it can serve its own calls.  As described in option 4, if the car is in the overlap zone and travelling back towards its park floor it must continue forward until it has left the overlap zone, so as to avoid causing a deadlock situation.
+		\item[MustContinueInCurrentDirection] This method works out whether or not the car must continue forward in order to allow the other car to visit its calls, even if this car needs to reverse before it can serve its own calls.  As described in EOZA, if the car is in the overlap zone and travelling back towards its park floor it must continue forward until it has left the overlap zone, so as to avoid causing a deadlock situation.
 	\end{description}
 	
-All of these three methods require knowledge of the current zones applicable to the two cars in the shaft.  Therefore, a CurrentZone property was added in the TCOSCar class, which calculates and returns a list of all floors in the current zone according the definition described in option 4.  Additionally, a CurrentFloorsOccupied property was added in the TCOSCar class, which returns a list of up to 2 floors that the car is currently occupying.  If a car is stopped at floor 4, this list only contains the value 4, while if it is moving from floor 4 to floor 5, the list contains both 4 and 5 until it arrives at floor 5 when it will contain just 5.
+All of these three methods require knowledge of the current zones applicable to the two cars in the shaft.  Therefore, a CurrentZone property was added in the TCOSCar class, which calculates and returns a list of all floors in the current zone according the definition described in EOZA.  Additionally, a CurrentFloorsOccupied property was added in the TCOSCar class, which returns a list of up to 2 floors that the car is currently occupying.  If a car is stopped at floor 4, this list only contains the value 4, while if it is moving from floor 4 to floor 5, the list contains both 4 and 5 until it arrives at floor 5 when it will contain just 5.
 
 A new action was added to the CarAction options, named `Waiting', which a TCOS car uses when it is stationary waiting for the other car to perform tasks before it can move.  When one car in the shaft moves, it notifies the other car so that the other car can, if appropriate, re-assess the situation and decide whether or not to continue waiting.  The waiting car will begin moving again once the other car has started moving back towards its park floor.
 
@@ -1191,7 +1195,7 @@ The passenger arrival schedule was designed to invoke all of the code path scena
 		\item A car is inside the overlap zone when the allocator attempts to allocate a P1 call that would require the car to visit the floor at which the other car is currently waiting.  Since this would result in a deadlock scenario, the car must reject the call.
 	\end{itemize}
 
-When I first ran the TCOS Elevator Simulator configured as described above, the two cars in the shaft entered a deadlock scenario.  This meant that either there was a problem with the logic decided upon in option 4 (extended overlapping dynamic zoning) or that it had been incorrectly implemented in the code.  I placed a breakpoint in the code to be activated just before the deadlock scenario occurred so that I could examine the implementation and determine the cause of the problem.  It turned out that the implementation of the logic in the MustContinueInCurrentDirection method was flawed in that it only considered the floor of the other car's state, even if the other car had been authorised to proceed to the next floor and was moving towards it.  I changed the code to use the CurrentFloorsOccupied property of TCOSCar which includes the floor towards which a car has started moving.
+When I first ran the TCOS Elevator Simulator configured as described above, the two cars in the shaft entered a deadlock scenario.  This meant that either there was a problem with the logic decided upon in \autoref{tesoption4} (extended overlapping dynamic zoning) or that it had been incorrectly implemented in the code.  I placed a breakpoint in the code to be activated just before the deadlock scenario occurred so that I could examine the implementation and determine the cause of the problem.  It turned out that the implementation of the logic in the MustContinueInCurrentDirection method was flawed in that it only considered the floor of the other car's state, even if the other car had been authorised to proceed to the next floor and was moving towards it.  I changed the code to use the CurrentFloorsOccupied property of TCOSCar which includes the floor towards which a car has started moving.
 
 After I had corrected this aspect of the code, I ran the simulation again and found that everything behaved as expected.  The car state changes happened at the right times (within the 10-millisecond accuracy to which I had performed my calculations), and all passenger boarding and arrival times were as expected, as well as the success and failure of call allocations.  I am now confident that my changes to the Domain Model in the TCOS Elevator Simulator are valid.  \autoref{tcosvalidationgraph} is an Excel-generated graph which shows the movement of the upper (pink) and lower (blue) cars with time, demonstrating the minimum distance maintained between the two cars.
 
@@ -1215,7 +1219,7 @@ In this chapter, I will discuss a number of allocation algorithms that I have de
 
 The Estimated Time of Arrival (ETA) algorithm is an existing algorithm for traditional elevator systems which has been widely studied in the literature \citep{Rong2003, Nikovski2003} and performed well in simulations \citep{Rong2003}.  The algorithm happens to work in such a way that its concepts can be adapted for use in the TCOS case.  After briefly describing ETA in its original form, I will discuss three ways in which I have adapted it for TCOS systems.
 
-ETA is an immediate allocation algorithm that aims to minimise the average waiting time of all passengers in the system.  Every time a new hall call is made, it considers allocating the call to each one of the cars in the system and estimates the cost each of the possible allocations.  It then allocates the call to the car which results in the lowest estimated cost.  The cost estimation function of allocating the call to a given car is made up of two parts: the estimated time taken for the car to reach the new call (Estimated Waiting Time), and the total additional waiting time caused to the other passengers currently waiting for the car (System Degradation Factor) \citep{Rong2003}.  The Estimated Waiting Time and System Degradation Factor are summed together to provide the total estimated cost.
+ETA is an immediate allocation algorithm that aims to minimise the average waiting time of all passengers in the system.  Every time a new hall call is made, it considers allocating the call to each one of the cars in the system and estimates the cost of each of the possible allocations.  It then allocates the call to the car which results in the lowest estimated cost.  The cost estimation function of allocating the call to a given car is made up of two parts: the estimated time taken for the car to reach the new call (Estimated Waiting Time), and the total additional waiting time caused to the other passengers currently waiting for the car (System Degradation Factor) \citep{Rong2003}.  The Estimated Waiting Time and System Degradation Factor are summed together to provide the total estimated cost.
 
 A simple modification to ETA allows allocation costs to be estimated based on squared waiting times, thus preferring a narrower spread of results over one where some individuals benefit highly and others are severely disadvantaged.
 
@@ -1223,7 +1227,7 @@ A simple modification to ETA allows allocation costs to be estimated based on sq
 
 \subsection{Na\"{i}ve ETA}
 
-The simplest method of adapting ETA for TCOS systems is simply to apply the basic cost estimation function to each car in the system ignoring the interactions between two cars in the same shaft.  The method of calculating the approximate cost is as follows:
+The simplest method of adapting ETA for TCOS systems is simply to apply the basic cost estimation function to each car in the system ignoring the interactions between two cars in the same shaft, as if all the cars were actually in separate shafts.  The method of calculating the approximate cost is as follows:
 
 Assume the following given time parameters (all in seconds):\\*
 \begin{tabularx}{\linewidth}{l X}
@@ -1242,27 +1246,27 @@ where $c$ is the car, $h$ is the new hall call to be allocated, $G(c)$ is the se
 The total estimated cost of allocating call $h$ to car $c$ is as follows:
 \[ Cost(c, h) = SDF(c, h) + EWT(h, c, G(c) \cup \left\{ h \right\}) \]
 
-The cars are all ranked by their respective values of the estimated cost function.  If the most preferred car rejects the allocation (see the notes on option 4 in \autoref{teschapter} for why this might happen) then the second most preferred car will be attempted, and so on.
+The cars are all ranked by their respective values of the estimated cost function.  If the most preferred car rejects the allocation (see the notes on in \autoref{tesoption4} for why this might happen) then the second most preferred car will be attempted, and so on.
 
-Estimated waiting times can be calculated en masse by doing a rough simulation of the behaviour of the elevator using the six time parameters above and noting the boarding times of each group.  It would be possible to perform this simulation more exactly by using the simulation methods employed by my own TCOS Elevator Simulator but this is computationally expensive and in real world applications allocation decisions must be quickly computable both to make the process more efficient from a customer perspective and to avoid the state of the system changing significantly during the course of the computation.  I consider that the small loss of accuracy from using an approximate method is unlikely to significantly affect the performance of the allocation algorithm, and the consequences of an occasional sub-optimal allocation are of less concern than the alternative risks.
+Estimated waiting times can be calculated en masse by doing a rough simulation of the behaviour of the elevator using the six time parameters above and noting the boarding times of each group.  It would be possible to perform this simulation more exactly by using the simulation methods employed by my own TCOS Elevator Simulator but this is computationally expensive and in real world applications allocation decisions must be quickly computable both to make the process more efficient from a customer perspective and to avoid the state of the system changing significantly during the course of the computation (the TCOS Elevator Simulator is not sensitive to these practical issues, due to the inherently synchronous nature of the discrete event-based design -- see \autoref{cesarchitecture}).  I consider that the small loss of accuracy from using an approximate method is unlikely to significantly affect the performance of the allocation algorithm, and the consequences of an occasional sub-optimal allocation are of less concern than the alternative risks.
 
 \subsection{Conflict-sensitive ETA}
 \label{algETAconflict}
 
 An obvious flaw with the na\"{i}ve algorithm is that is does not account for the delay caused by two cars in the same shaft having conflicting movements.  In order to resolve this, I have designed a simple method of predicting the cost caused by conflicts.  Again, I have chosen this method so as to minimize the computational cost for the same reasons as discussed with the na\"{i}ve algorithm.  The general method is the same as described above, but the EWT must now take into account the behaviour of both cars, and their interactions, and the SDF must take into account the delay caused to passengers in the other car ($d$) as well as those in the allocation car ($c$).
 
-In order to calculate the estimated waiting times of all groups in $G(c)$ and $G(d)$ we firstly work out an overlap region which is the range of floors that both $c$ and $d$ must visit in order to serve their respective calls.  We perform separate rough simulations of the behaviour of $c$ and $d$ as described for the na\"{i}ve algorithm but we take note of the times at which the car enters the overlap region and when it turns around to leave the region again (at which point the region becomes available to the other car).  If there is no overlap region (i.e. the calls in $G(c)$ and $G(d)$ relate to disjoint sets of floors) then no entries or reversals are recorded.  After completing the simulations we retrospectively analyse the times spent in the overlap region.  When two cars attempt to use the overlap region at the same time, it is assumed that the first car to arrive gets priority and that the second car must wait until the first has turned around before entering.  Therefore, the delay caused to the second car by waiting (easily calculated by taking the second car's entry time from the first car's reversal time) is added to all of its subsequent times.  As with the na\"{i}ve algorithm, we must calculate these estimated waiting times twice -- once including and once excluding the new hall call allocation -- in order to determine the SDF.
+In order to calculate the estimated waiting times of all groups in $G(c)$ and $G(d)$ we firstly work out an overlap region which is the range of floors that both $c$ and $d$ must visit in order to serve their respective calls.  We perform separate rough simulations of the behaviour of $c$ and $d$ as described for the na\"{i}ve algorithm but we take note of the times at which the car enters the overlap region and when it turns around to leave the region again (at which point the region becomes available to the other car - see \autoref{tesoption4}).  If there is no overlap region (i.e. the calls in $G(c)$ and $G(d)$ relate to disjoint sets of floors) then no entries or reversals are recorded.  After completing the simulations we retrospectively analyse the times spent in the overlap region.  When two cars attempt to use the overlap region at the same time, it is assumed that the first car to arrive gets priority and that the second car must wait until the first has turned around before entering.  Therefore, the delay caused to the second car by waiting (easily calculated by taking the second car's entry time from the first car's reversal time) is added to all of its subsequent times.  As with the na\"{i}ve algorithm, we must calculate these estimated waiting times both including and excluding the new hall call allocation in order to determine the SDF.
 
 This method makes many assumptions about the behaviour of the cars, and in some cases has the potential to provide quite bad estimations (a small error in calculating times could have a significant propagation effect if it means that the order in which two cars approach the overlap region is predicted incorrectly) but it is expected to add value to the ETA method nonetheless.
 
 \subsection{Load-sensitive ETA}
 
-Another factor that can be considered in ETA allocation algorithms is the question of what happens if an allocation results in the capacity of the car being exceeded at some point.  As discussed previously, I have a simplification assumption that, should a passenger group be allocated to a car that cannot accommodate it when the car arrives, the passenger group will wait for the same car to go away and come back.  Since this is likely to come with great time costs for affected passenger groups, it is imperative that allocation algorithms do not result in over-allocation where possible.  I have therefore designed a variant of ETA whereby a high penalty cost is applied every time a passenger group cannot be accommodated by the car to which they have been allocated.  The penalty cost is a parameter that should be set equivalent to a very high number of seconds, so as to discourage these allocations.  It should be noted that an allocation might cause a later group not to be accommodated, even if the passenger group under allocation can be accommodated itself.  If an allocation results in 2 passenger groups being affected in this way, then the penalty cost will be applied twice, and so on for greater numbers.  The SDF is altered accordingly.  Assuming a high penalty cost value is chosen, this method has the effect of prioritising firstly the allocation that results in the fewest capacity-related problems, and resolving `ties' by minimising the original EWT costs described previously.
+Another factor that can be considered in ETA allocation algorithms is the question of what happens if an allocation results in the capacity of the car being exceeded at some point.  As discussed previously, I have a simplification assumption that, should a passenger group be allocated to a car that cannot accommodate it when the car arrives, the passenger group will wait for the same car to go away and come back.  Since this is likely to come with great time costs for affected passenger groups, it is imperative that allocation algorithms do not result in over-allocation where possible.  I have therefore designed a variant of ETA whereby a high penalty cost is applied every time a passenger group cannot be accommodated by the car to which they have been allocated.  The penalty cost is a parameter that should be set equivalent to a very high number of seconds, so as to discourage these allocations.  It should be noted that an allocation might cause a later group not to be accommodated, even if the passenger group under allocation can be accommodated itself.  If an allocation results in two passenger groups being affected in this way, then the penalty cost will be applied twice, and so on for greater numbers.  The SDF is altered accordingly.  Assuming a high penalty cost value is chosen, this method has the effect of prioritising firstly the allocation that results in the fewest capacity-related problems, and resolving `ties' by minimising the original EWT costs described previously.
 
 \section{Estimated Time to Destination Allocation (ETD)}
 \label{algETDdescription}
 
-The ETD algorithm is very similar to ETA, but with the difference that it attempts to minimise the average \textit{system} time (or squared system time) rather than the waiting time.  Usage of ETD in traditional elevator systems is hampered (to a greater extent than ETA) by the lack of information about passenger group destinations until they have boarded the car and pressed a button.  I expect that since the system with which we are concerned includes Destination Control we can make very effective use of this method without needing to speculate about passenger destinations.
+The ETD algorithm is very similar to ETA, but with the difference that it attempts to minimise the average \textit{system} time (or squared system time) rather than the waiting time.  Usage of ETD in the absence of Destination Control is hampered (to a greater extent than ETA) by the lack of information about passenger group destinations until they have boarded the car and pressed a button.  I expect that since the system with which we are concerned includes Destination Control we can make very effective use of this method without needing to speculate about passenger destinations.
 
 The comments made about ETA in \autoref{algETAdescription} also apply to ETD, as do the variant adaptation methods described (na\"{i}ve, conflict-sensitive and load-sensitive).  I will briefly discuss the way in which these adaptations can be analogously applied to ETD.
 
@@ -1354,7 +1358,7 @@ The general method for adding an Allocator to the simulator is described in \aut
 
 \subsection{ETA and ETD}
 
-Due to the similarities and common code elements of the ETA and ETD algorithm variants, I decided to make a single Allocator class to handle all of the variants.  The constructor of this Allocator takes four parameters which specify ETA vs ETD, Conflict-sensitivity, power to which loss function is to be raised (i.e. average waiting time vs average \textit{squared} waiting time) and Load-sensitivity respectively.  Since the TCOS Elevator Simulator design does not cater for users to specify Allocator parameters in the configuration file, the AllocatorType enumeration has separate constants for each of the permutations and the mapping method puts the appropriate parameters into the Allocator's constructor.
+Due to the similarities and common code elements of the ETA and ETD algorithm variants, I decided to make a single Allocator class to handle all of these variants.  The constructor of this Allocator takes four parameters which specify ETA vs ETD, Conflict-sensitivity, power to which loss function is to be raised (i.e. average waiting time vs average \textit{squared} waiting time) and Load-sensitivity respectively.  Since the TCOS Elevator Simulator design does not cater for users to specify Allocator parameters in the configuration file, the AllocatorType enumeration has separate constants for each of the permutations and the mapping method puts the appropriate parameters into the Allocator's constructor.
 
 The allocator method retrieves a list of all cars in the building, and orders these cars by their cost of allocation, which is calculated by a CalculateCost(car, group) method, where \textit{car} is the car in question ($c$) and \textit{group} is the group to be allocated ($h$).
 
@@ -1374,11 +1378,11 @@ The Allocator for the MOA algorithm is extremely simple.  The constructor for th
 
 FZA, like ETA/ETD, is implemented as a single Allocator class where the parameter (distribution of split points) is passed into the constructor.
 
-This Allocator works out a list including every car that can serve both the origin and destination of the new hall call without leaving its fixed zone (the qualifying cars).  It then orders this list by the size of the fixed zones of each car.  Preference is given to qualifying car with the smallest fixed zone.
+This Allocator works out a list including every car that can serve both the origin and destination of the new hall call without leaving its fixed zone (the qualifying cars).  It then orders this list by the size of the fixed zones of each car.  Preference is given to the qualifying car with the smallest fixed zone.
 
 \section{Validation}
 
-As part of the Core Elevator Simulator, a Manual Allocator was included which does not perform any calculation itself but asks the user to choose which car the call should be allocated to.  In order to verify the behaviour of the three new Allocators I have designed a 5-minute passenger distribution which, when run using any of the new Allocators, causes their respective key code paths to be executed.  For each algorithm, I have used the Manual Allocator and made the allocation decisions myself in the way that I expect the implemented Allocators to behave.  I have then compared my allocation decisions to those of the implemented Allocators in the same situations.  This method has allowed me to concentrate specifically on the behaviour of the new Allocator code without having to worry about the logic of the Domain Model, which has already been properly tested in \autoref{ceschapter} and \autoref{teschapter}.  In all cases, the implemented Allocators were found to behave as expected.
+As part of the Core Elevator Simulator, a Manual Allocator was included which does not perform any calculation itself but asks the user to choose which car the call should be allocated to.  In order to verify the behaviour of the three new Allocators I have designed a small 5-minute passenger distribution which, when run using any of the new Allocators, causes the most important paths through the code to be executed.  For each algorithm, I have used the Manual Allocator and made the allocation decisions myself in the way that I expect the implemented Allocators to behave, facilitated by placing appropriate breakpoints in the code and examining the state of the system at the time of each hall call.  I have then compared my allocation decisions to those of the implemented Allocators in the same situations.  This method has allowed me to concentrate specifically on the behaviour of the new Allocator code without having to worry about the logic of the Domain Model, which has already been properly tested in \autoref{ceschapter} and \autoref{teschapter}.  In all cases, the implemented Allocators were found to behave as expected.
 
 \chapter{Evaluation of Allocation Algorithms}
 \label{algevaluation}
@@ -1387,7 +1391,7 @@ As part of the Core Elevator Simulator, a Manual Allocator was included which do
 
 \subsection{Parameters of building}
 
-In order to produce useful results, it is sensible to attempt to create a simulation scenario that is realistic.  In various commercial resources, Thyssenkrupp -- the main supplier of TCOS elevator systems -- suggest that it a single TCOS group are best suited to buildings of 50 - 200m in height \citep{ThyssenkruppFactSheet, ThyssenkruppWebsite}.  Much of the previous literature uses floor heights of around 4m in their simulations, so in order to maintain consistency I have decided to use a building 30-storey building of 120m in height (4m per floor) \citep{Brand2004, Nikovski2003, Rong2003}.
+In order to produce useful results, it is sensible to attempt to create a simulation scenario that is realistic.  In various commercial resources, Thyssenkrupp -- the main supplier of TCOS elevator systems -- suggest that a single TCOS group is best suited to buildings of 50 - 200m in height \citep{ThyssenkruppFactSheet, ThyssenkruppWebsite}.  Much of the previous literature uses floor heights of around 4m in their simulations, so in order to maintain consistency I have decided to use a building 30-storey building of 120m in height (4m per floor) \citep{Brand2004, Nikovski2003, Rong2003}.
 
 The capacity of cars is generally set at around 20 people in existing literature, so I will use 20 people \citep{Rong2003, Crites1996, Siikonen1993}.
 
@@ -1444,6 +1448,7 @@ Given the building set up of 30 floors and 6 TCOS shafts, the split points used 
 \end{tabular}
 
 \section{Results}
+\label{tcosresults}
 
 I will present the results in a separate table for each of the 4 traffic flows, followed by a brief discussion of each.  Since three different passenger arrival schedules were tested against for each traffic flow, the values shown are the mean averages of the three tests and are rounded to two decimal places (2dp).  The evaluation criteria shown are as follows:
 \begin{itemize}
@@ -1457,7 +1462,7 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 
 \subsection{Up-peak}
 
-\begin{tabular}{l | l l l l l l}
+\begin{tabular}{l | r r r r r r}
 	& AWT & ASWT & AST & ASST & LWT & LST \\
 	\hline
 	ETA-n & 22.95 & 2766.57 & 90.70 & 12193.42 & 318.07 & 442.61 \\
@@ -1467,12 +1472,12 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 	ETA-c & 23.61 & 2886.73 & 91.10 & 12235.34 & 311.87 & 412.51 \\
 	ETA-cl & 15.02 & 846.69 & 82.60 & 8978.94 & 198.85 & 322.32 \\
 	ETA-cs & 22.33 & 2414.25 & 88.86 & 11186.35 & 279.03 & 389.10 \\
-	ETA-cls & 13.54 & 670.57 & 81.44 & 8724.48 & 174.11 & 318.16 \\
+	ETA-cls & \textbf{13.54} & \textbf{670.57} & 81.44 & 8724.48 & 174.11 & 318.16 \\
 	\hline
-	ETD-n & 32.83 & 1936.64 & 71.73 & 6364.71 & 177.63 & 208.59 \\
-	ETD-nl & 32.83 & 1936.64 & 71.73 & 6364.71 & 177.63 & 208.59 \\
-	ETD-ns & 32.99 & 1966.03 & 72.71 & 6434.30 & 145.91 & 199.61 \\
-	ETD-nls & 32.99 & 1966.03 & 72.71 & 6434.30 & 145.91 & 199.61 \\
+	ETD-n & 32.83 & 1936.64 & \textbf{71.73} & \textbf{6364.71} & 177.63 & 208.59 \\
+	ETD-nl & 32.83 & 1936.64 & \textbf{71.73} & \textbf{6364.71} & 177.63 & 208.59 \\
+	ETD-ns & 32.99 & 1966.03 & 72.71 & 6434.30 & \textbf{145.91} & \textbf{199.61} \\
+	ETD-nls & 32.99 & 1966.03 & 72.71 & 6434.30 & \textbf{145.91} & \textbf{199.61} \\
 	ETD-c & 33.99 & 2109.20 & 72.86 & 6620.36 & 166.75 & 206.43 \\
 	ETD-cl & 33.99 & 2109.20 & 72.86 & 6620.36 & 166.75 & 206.43 \\
 	ETD-cs & 32.32 & 1939.38 & 72.45 & 6413.19 & 159.57 & 206.25 \\
@@ -1487,11 +1492,11 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 
 \subsection{Down-peak}
 
-\begin{tabular}{l | l l l l l l}
+\begin{tabular}{l | r r r r r r}
 	& AWT & ASWT & AST & ASST & LWT & LST \\
 	\hline
-	ETA-n & 25.43 & 1272.46 & 70.86 & 6484.97 & 157.75 & 239.10 \\
-	ETA-nl & 25.37 & 1290.76 & 71.41 & 6629.70 & 157.75 & 244.38 \\
+	ETA-n & 25.43 & \textbf{1272.46} & \textbf{70.86} & \textbf{6484.97} & 157.75 & 239.10 \\
+	ETA-nl & \textbf{25.37} & 1290.76 & 71.41 & 6629.70 & 157.75 & 244.38 \\
 	ETA-ns & 25.76 & 1302.46 & 71.48 & 6520.65 & 178.31 & 247.50 \\
 	ETA-nls & 25.73 & 1286.33 & 71.41 & 6523.68 & 171.14 & 246.74 \\
 	ETA-c & 25.78 & 1324.00 & 70.96 & 6494.18 & 156.55 & 239.10 \\
@@ -1499,14 +1504,14 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 	ETA-cs & 25.75 & 1301.97 & 71.46 & 6518.96 & 178.31 & 247.50 \\
 	ETA-cls & 25.73 & 1286.33 & 71.41 & 6523.68 & 171.14 & 246.74 \\
 	\hline
-	ETD-n & 38.70 & 2435.81 & 76.74 & 7318.08 & 154.78 & 231.56 \\
-	ETD-nl & 38.70 & 2435.81 & 76.74 & 7318.08 & 154.78 & 231.56 \\
+	ETD-n & 38.70 & 2435.81 & 76.74 & 7318.08 & \textbf{154.78} & 231.56 \\
+	ETD-nl & 38.70 & 2435.81 & 76.74 & 7318.08 & \textbf{154.78} & 231.56 \\
 	ETD-ns & 35.58 & 2118.53 & 75.01 & 7000.12 & 156.87 & 222.93 \\
 	ETD-nls & 35.58 & 2118.53 & 75.01 & 7000.12 & 156.87 & 222.93 \\
 	ETD-c & 39.17 & 2472.69 & 77.37 & 7426.74 & 157.76 & 225.78 \\
 	ETD-cl & 39.17 & 2472.69 & 77.37 & 7426.74 & 157.76 & 225.78 \\
-	ETD-cs & 35.34 & 2062.32 & 74.58 & 6879.00 & 165.67 & 213.49 \\
-	ETD-cls & 35.34 & 2062.32 & 74.58 & 6879.00 & 165.67 & 213.49 \\
+	ETD-cs & 35.34 & 2062.32 & 74.58 & 6879.00 & 165.67 & \textbf{213.49} \\
+	ETD-cls & 35.34 & 2062.32 & 74.58 & 6879.00 & 165.67 & \textbf{213.49} \\
 	\hline
 	MOA & 30.88 & 1664.10 & 86.22 & 9533.58 & 229.32 & 310.17 \\
 	\hline
@@ -1517,7 +1522,7 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 
 \subsection{Interfloor}
 
-\begin{tabular}{l | l l l l l l}
+\begin{tabular}{l | r r r r r r}
 	& AWT & ASWT & AST & ASST & LWT & LST \\
 	\hline
 	ETA-n & 33.10 & 2507.13 & 80.66 & 9408.37 & 287.33 & 376.50 \\
@@ -1525,20 +1530,20 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 	ETA-ns & 35.34 & 2696.41 & 83.60 & 9873.45 & 259.71 & 362.03 \\
 	ETA-nls & 35.34 & 2696.41 & 83.60 & 9873.45 & 259.71 & 362.03 \\
 	ETA-c & 32.85 & 2402.32 & 79.78 & 8994.29 & 258.07 & 339.17 \\
-	ETA-cl & 31.26 & 2110.05 & 78.19 & 8589.13 & 259.41 & 334.23 \\
+	ETA-cl & \textbf{31.26} & 2110.05 & 78.19 & 8589.13 & 259.41 & 334.23 \\
 	ETA-cs & 33.44 & 2524.32 & 80.81 & 9231.36 & 272.60 & 364.34 \\
 	ETA-cls & 33.44 & 2524.32 & 80.81 & 9231.36 & 272.60 & 364.34 \\
 	\hline
 	ETD-n & 44.21 & 3344.43 & 76.19 & 7614.40 & 205.53 & 257.76 \\
 	ETD-nl & 44.21 & 3344.43 & 76.19 & 7614.40 & 205.53 & 257.76 \\
-	ETD-ns & 41.12 & 2897.23 & 74.29 & 7094.14 & 225.60 & 259.31 \\
-	ETD-nls & 41.12 & 2897.23 & 74.29 & 7094.14 & 225.60 & 259.31 \\
-	ETD-c & 45.19 & 3509.57 & 77.59 & 7913.72 & 204.13 & 254.29 \\
-	ETD-cl & 45.19 & 3509.57 & 77.59 & 7913.72 & 204.13 & 254.29 \\
+	ETD-ns & 41.12 & 2897.23 & \textbf{74.29} & \textbf{7094.14} & 225.60 & 259.31 \\
+	ETD-nls & 41.12 & 2897.23 & \textbf{74.29} & \textbf{7094.14} & 225.60 & 259.31 \\
+	ETD-c & 45.19 & 3509.57 & 77.59 & 7913.72 & \textbf{204.13} & \textbf{254.29} \\
+	ETD-cl & 45.19 & 3509.57 & 77.59 & 7913.72 & \textbf{204.13} & \textbf{254.29} \\
 	ETD-cs & 43.98 & 3306.24 & 77.45 & 7795.03 & 216.50 & 261.59 \\
 	ETD-cls & 43.98 & 3306.24 & 77.45 & 7795.03 & 216.50 & 261.59 \\
 	\hline
-	MOA & 32.54 & 1887.94 & 80.20 & 9005.07 & 243.29 & 346.36 \\
+	MOA & 32.54 & \textbf{1887.94} & 80.20 & 9005.07 & 243.29 & 346.36 \\
 	\hline
 	FZA-u & 59.31 & 6263.42 & 99.42 & 14158.32 & 315.08 & 391.95 \\
 	FZA-c & 133.05 & 166137.65 & 176.86 & 188773.04 & 3575.14 & 3634.49 \\
@@ -1547,11 +1552,11 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 
 \subsection{Lunchtime}
 
-\begin{tabular}{l | l l l l l l}
+\begin{tabular}{l | r r r r r r}
 	& AWT & ASWT & AST & ASST & LWT & LST \\
 	\hline
 	ETA-n & 25.59 & 1723.55 & 75.39 & 7855.82 & 297.68 & 384.43 \\
-	ETA-nl & 24.48 & 1558.05 & 73.62 & 7394.87 & 250.23 & 290.42 \\
+	ETA-nl & \textbf{24.48} & \textbf{1558.05} & 73.62 & 7394.87 & 250.23 & 290.42 \\
 	ETA-ns & 25.20 & 1608.57 & 75.57 & 7896.16 & 232.23 & 301.38 \\
 	ETA-nls & 25.57 & 1612.14 & 75.83 & 7925.43 & 225.69 & 327.42 \\
 	ETA-c & 26.37 & 1875.05 & 77.10 & 8300.02 & 367.84 & 463.27 \\
@@ -1561,10 +1566,10 @@ I will present the results in a separate table for each of the 4 traffic flows, 
 	\hline
 	ETD-n & 36.39 & 2371.38 & 73.26 & 6865.08 & 197.00 & 256.17 \\
 	ETD-nl & 36.39 & 2371.38 & 73.26 & 6865.08 & 197.00 & 256.17 \\
-	ETD-ns & 35.34 & 2229.92 & 72.98 & 6715.45 & 179.35 & 222.04 \\
-	ETD-nls & 35.34 & 2229.92 & 72.98 & 6715.45 & 179.35 & 222.04 \\
-	ETD-c & 37.24 & 2434.71 & 73.59 & 6883.56 & 171.76 & 235.27 \\
-	ETD-cl & 37.24 & 2434.71 & 73.59 & 6883.56 & 171.76 & 235.27 \\
+	ETD-ns & 35.34 & 2229.92 & \textbf{72.98} & \textbf{6715.45} & 179.35 & \textbf{222.04} \\
+	ETD-nls & 35.34 & 2229.92 & \textbf{72.98} & \textbf{6715.45} & 179.35 & \textbf{222.04} \\
+	ETD-c & 37.24 & 2434.71 & 73.59 & 6883.56 & \textbf{171.76} & 235.27 \\
+	ETD-cl & 37.24 & 2434.71 & 73.59 & 6883.56 & \textbf{171.76} & 235.27 \\
 	ETD-cs & 36.20 & 2358.08 & 74.05 & 6902.26 & 211.99 & 249.32 \\
 	ETD-cls & 36.20 & 2358.08 & 74.05 & 6902.26 & 211.99 & 249.32 \\
 	\hline
@@ -1584,6 +1589,76 @@ As expected, ETA generally gave better AWT and ASWT results than ETD, while ETD 
 In up-peak traffic, ETA performed best in its most complex form (ETA-cls), while ETD was best in its simplest form (ETA-n).  For down-peak traffic, the na\"{i}ve variants of both ETA and ETD (ETA-n, ETD-n) did better than the more complicated variants.  During interfloor traffic, ETA-cl and ETA-nl did better than the other ETA variants, suggesting that load-sensitivity was virtuous, while ETD did best as ETD-ns (na\"{i}ve squared form).  In lunchtime traffic, ETA benefitted again from load-sensitivity with ETA-nl coming out on top, while ETD-ns was again the best ETD variant.
 
 From these results we can see that conflict-sensitivity does not necessarily improve matters for ETA and ETD.  It seems that, based on these results, operators of TCOS elevator systems ought to choose between ETA and ETD depending on whether they prioritise waiting time or system time for their passengers.  MOA provides very good waiting time results for interfloor traffic, while remaining computationally less-expensive than ETA and ETD, which might make it appropriate for some installations.  If possible, it might be sensible for an operator to use MOA during interfloor traffic periods, switching as appropriate to ETA or ETD at other times.  These results do not recommend FZA as a good policy, though FZA-u is not disastrous under certain conditions.  FZA-u could be a consideration for certain customers who might wish to save cost by having one or more traditional shafts mixed with their TCOS shafts.
+
+\section{Comparison of Results with Performance of Traditional System}
+\label{tcosvssingle}
+
+Having seen the relative performance of the algorithms when simulating TCOS systems,  it is interesting to see the benefits offered by TCOS systems over traditional (single car per shaft) systems.  The following 8 algorithms, which were evaluated for TCOS systems, are also compatible with traditional systems:\\*
+
+\begin{tabularx}{\linewidth}{l X}
+	ETA-n		& Na\"{i}ve ETA optimising based on average waiting times. \\
+	ETA-ns		& Na\"{i}ve ETA optimising based on average squared waiting times. \\
+	ETA-nl		& Na\"{i}ve Load-sensitive ETA optimising based on average waiting times. \\
+	ETA-nls		& Na\"{i}ve Load-sensitive ETA optimising based on average squared waiting times. \\
+	ETD-n		& Na\"{i}ve ETD optimising based on average times to destination. \\
+	ETD-ns		& Na\"{i}ve ETD optimising based on average squared times to destination. \\
+	ETD-nl		& Na\"{i}ve Load-sensitive ETD optimising based on average times to destination. \\
+	ETD-nls		& Na\"{i}ve Load-sensitive ETD optimising based on average squared times to destination.
+\end{tabularx}
+
+I decided to perform simulations to test the performance of traditional shafts in the same building and with the same passenger arrival schedules as tested for each of the TCOS algorithms.  In order to get a feel for how many traditional shafts would be required to match the scores obtained in the TCOS case, I performed the simulations firstly using six traditional shafts, then seven, eight and nine.  The full results of these simulations are shown in \autoref{tradresults}, but here I list the times of the best performing algorithm for each traffic type, evaluation criteria and number of shafts, alongside the best score obtained in the equivalent TCOS case (taken from \autoref{tcosresults}).  For each traffic flow type and evaluation criterion, the score in bold shows the fewest number of shafts that are required to match the performance of the TCOS algorithms.
+
+\subsection{Up-peak}
+\begin{tabular}{l | r r r r r r}
+    & AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    Best TCOS Score & 13.54 & 670.57 & 71.73 & 6364.71 & 145.91 & 199.61 \\
+	\hline
+    Best 6-Car Traditional & 29.73 & 1463.01 & 95.51 & 10955.18 & 183.61 & 264.79 \\
+    Best 7-Car Traditional & 17.25 & \textbf{521.51} & 80.9 & 7755.7 & \textbf{137.17} & 207 \\
+    Best 8-Car Traditional & 14.59 & 368.77 & \textbf{70.13} & \textbf{5725.3} & 69.05 & \textbf{183.06} \\
+    Best 9-Car Traditional & \textbf{12.6} & 273.53 & 61.81 & 4407.05 & 53.8 & 154.89
+\end{tabular}
+
+\subsection{Down-peak}
+\begin{tabular}{l | r r r r r r}
+    & AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    Best TCOS Score & 25.37 & 1272.46 & 70.86 & 6484.97 & 154.78 & 213.49 \\
+	\hline
+    Best 6-Car Traditional & 31.82 & 1605.03 & 90.83 & 10200.13 & 168.76 & 233.32 \\
+    Best 7-Car Traditional & \textbf{24.54} & \textbf{920.43} & 76.4 & 7140.12 & \textbf{121.3} & \textbf{210.48} \\
+    Best 8-Car Traditional & 21.29 & 665.78 & \textbf{67.15} & \textbf{5372.65} & 99.29 & 173.7 \\
+    Best 9-Car Traditional & 19.09 & 535.03 & 61.25 & 4419.16 & 92.59 & 153.42
+\end{tabular}
+
+\subsection{Interfloor}
+\begin{tabular}{l | r r r r r r}
+    & AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    Best TCOS Score & 31.26 & 1887.94 & 74.29 & 7094.14 & 204.13 & 254.29 \\
+	\hline
+    Best 6-Car Traditional & 50.62 & 4057.68 & 121.08 & 18445.6 & 278.98 & 365.36 \\
+    Best 7-Car Traditional & 37.24 & 2120.92 & 95.26 & 11471.77 & 208.13 & 295.7 \\
+    Best 8-Car Traditional & \textbf{27.68} & \textbf{1177.27} & 76.41 & 7425.67 & \textbf{151.47} & \textbf{250.56} \\
+    Best 9-Car Traditional & 21.31 & 672.07 & \textbf{63.67} & \textbf{5115.43} & 96.96 & 212.26
+\end{tabular}
+
+\subsection{Lunchtime}
+\begin{tabular}{l | r r r r r r}
+    & AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    Best TCOS Score & 24.48 & 1558.05 & 72.98 & 6715.45 & 171.76 & 222.04 \\
+	\hline
+    Best 6-Car Traditional & 34.61 & 2024.18 & 98.66 & 11859.45 & 215.16 & 272.18 \\
+    Best 7-Car Traditional & \textbf{23.65} & \textbf{956.43} & 79.25 & 7662.9 & \textbf{132.93} & 230.46 \\
+    Best 8-Car Traditional & 17.93 & 529.75 & \textbf{66.69} & \textbf{5233.05} & 106.54 & \textbf{193.19} \\
+    Best 9-Car Traditional & 13.84 & 315.86 & 58.05 & 3918.17 & 76.18 & 156.97
+\end{tabular}
+
+\subsection{Comments on Comparative Results}
+
+It can be seen from these results that, in \textit{every} traditional case tested, at least one additional shaft is required to match the performance of the 6-shaft TCOS system.  The number of additional shafts required depends on the traffic flow and the evaluation criteria used, but in the majority of cases 8 or more traditional shafts are required to match the performance of 6 TCOS shafts for the building and scenarios simulated.  In fact, regardless of which evaluation criterion is used, at least one of the traffic flows requires 8 shafts to match the performance.  A saving of 2 shafts may sound insignificant, considering that each TCOS shaft requires the installation of two cars which must come at a cost, but in a city the cost of land space is extremely significant.  Our simulations considered a building of 30 floors, and elevator cars with a capacity of 20 people.  A standard shaft for cars of approximately that capacity has an area of approximately 76 square feet \citep{StannahFactSheet}, which when counted over 30 floors takes up a total of 2280 square feet which could be used for other means.  The average renting price for office space in New York City is \$49.98 per square foot per year \citep{Patrick2013OfficeSpace}.  It follows, therefore, that a 30-storey building in New York could make a space saving worth almost \$114,000 per year for each shaft.  With this in mind, the potential benefit of installing 6 TCOS shafts instead of 8 traditional shafts can start to be appreciated.
 
 \chapter{Conclusion and Further Work}
 
@@ -2071,6 +2146,244 @@ This is the manually-produced trace table that was used to verify the behaviour 
 	13:04:54.38 &  &  &  &  &  &  &  &  & Parked & Up & 9 & 9,9 & 0 &  &  & 0
 \end{longtable}
 \end{landscape}
+
+\chapter{Results of Experiments with Single Car Shafts in \autoref{tcosvssingle}}
+\label{tradresults}
+
+These are the results of running the simulations using 6, 7, 8 and 9 elevator shafts for each traffic case.  In each case, the three passenger arrival schedules were used and the results averaged.  The averaged results are shown in the following tables.
+
+\section{6 Shafts}
+
+\subsection{Up-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 59.43 & 9769.57 & 135.67 & 26718.10 & 912.56 & 980.22 \\
+    ETA-ns & 53.63 & 8456.07 & 128.74 & 23935.01 & 1128.61 & 1193.23 \\
+    ETA-nls & \textbf{29.73} & \textbf{1463.01} & 105.08 & 13475.68 & \textbf{183.61} & 272.32 \\
+    ETA-nl & 30.09 & 1500.63 & 106.64 & 13863.44 & 227.54 & 321.76 \\
+    ETD-n & 43.86 & 3144.06 & 97.54 & 11541.65 & 195.84 & 277.89 \\
+    ETD-ns & 40.8 & 2759.44 & \textbf{95.51} & \textbf{10955.18} & 183.72 & 264.95 \\
+    ETD-nls & 42.13 & 2910.75 & 97.40 & 11388.60 & 191.02 & \textbf{264.79} \\
+    ETD-nl & 44.21 & 3142.71 & 97.97 & 11629.58 & 186.09 & 270.00
+\end{tabular}
+
+\subsection{Down-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 33.46 & 1914.16 & 93.99 & 11067.54 & 225.70 & 277.39 \\
+    ETA-ns & 33.98 & 1974.81 & 95.14 & 11239.82 & 301.29 & 360.18 \\
+    ETA-nls & 32.71 & 1642.62 & 91.93 & 10307.23 & 184.19 & 249.61 \\
+    ETA-nl & \textbf{31.82} & \textbf{1605.03} & \textbf{90.83} & \textbf{10200.13} & 187.79 & 269.05 \\
+    ETD-n & 51.89 & 3916.47 & 96.55 & 11189.91 & 188.48 & 238.53 \\
+    ETD-ns & 44.97 & 3090.05 & 92.70 & 10365.13 & 175.66 & 240.67 \\
+    ETD-nls & 45.34 & 3125.51 & 92.95 & 10411.46 & \textbf{168.76} & 240.00 \\
+    ETD-nl & 51.77 & 3894.95 & 96.36 & 11149.22 & 175.29 & \textbf{233.32}
+\end{tabular}
+
+\subsection{Interfloor}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 54.37 & 5695.07 & 124.23 & 20380.11 & 433.73 & 544.15 \\
+    ETA-ns & 56.10 & 5721.54 & 126.77 & 20997.14 & 466.79 & 577.60 \\
+    ETA-nls & \textbf{50.62} & \textbf{4057.68} & \textbf{121.08} & \textbf{18445.60} & \textbf{278.98} & \textbf{365.36} \\
+    ETA-nl & 51.90 & 4711.68 & 121.26 & 19112.02 & 357.25 & 500.13 \\
+    ETD-n & 80.02 & 10042.09 & 125.32 & 20381.47 & 307.66 & 386.13 \\
+    ETD-ns & 74.89 & 9034.32 & 122.41 & 19380.90 & 324.54 & 402.11 \\
+    ETD-nls & 74.89 & 9034.32 & 122.41 & 19380.90 & 324.54 & 402.11 \\
+    ETD-nl & 80.02 & 10042.09 & 125.32 & 20381.47 & 307.66 & 386.13
+\end{tabular}
+
+\subsection{Lunchtime}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 41.35 & 3899.44 & 108.95 & 15800.07 & 462 & 541.29 \\
+    ETA-ns & 40.80 & 3554.55 & 108.01 & 15214.36 & 465.23 & 526.86 \\
+    ETA-nls & \textbf{34.61} & \textbf{2024.18} & 100.58 & 12554.46 & 260.68 & 358.59 \\
+    ETA-nl & 36.60 & 2416.14 & 102.56 & 13144.10 & 259.52 & 371.37 \\
+    ETD-n & 53.80 & 4620.94 & 98.94 & 12011.08 & 217.36 & 281.27 \\
+    ETD-ns & 51.41 & 4254.63 & 98.84 & \textbf{11859.45} & 223.39 & 284.16 \\
+    ETD-nls & 51.41 & 4254.63 & 98.84 & \textbf{11859.45} & 223.39 & 284.16 \\
+    ETD-nl & 53.38 & 4554.54 & \textbf{98.66} & 11934.30 & \textbf{215.16} & \textbf{272.18}
+\end{tabular}
+
+\section{7 Shafts}
+
+\subsection{Up-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 29.87 & 3363.03 & 100.35 & 14131.45 & 342.62 & 442.89 \\
+    ETA-ns & 26.43 & 2536.80 & 96.48 & 12853.73 & 362.88 & 455.52 \\
+    ETA-nls & 17.85 & 545.28 & 89.74 & 9934.14 & \textbf{137.17} & 238.34 \\
+    ETA-nl & \textbf{17.25} & \textbf{521.51} & 89.36 & 9889.68 & 174.71 & 251.43 \\
+    ETD-n & 34.51 & 1967.84 & 81.42 & 8038.15 & 169.87 & 211.64 \\
+    ETD-ns & 32.68 & 1787.50 & \textbf{80.90} & \textbf{7755.70} & 162.79 & \textbf{207.00} \\
+    ETD-nls & 32.60 & 1785.34 & 80.92 & 7777.33 & 162.79 & 207.26 \\
+    ETD-nl & 34.58 & 1987.39 & 81.60 & 8090.41 & 165.12 & 208.04
+\end{tabular}
+
+\subsection{Down-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 25.57 & 1019.21 & 77.36 & 7426.43 & 144.92 & 235.36 \\
+    ETA-ns & 25.53 & 1006.01 & 77.14 & 7341.01 & 147.70 & 224.39 \\
+    ETA-nls & 25.24 & 953.92 & 76.48 & 7182.91 & 142.18 & 212.51 \\
+    ETA-nl & \textbf{24.54} & \textbf{920.43} & \textbf{76.40} & 7293.88 & \textbf{121.30} & 219.62 \\
+    ETD-n & 41.01 & 2496.94 & 80.59 & 7808.99 & 153.47 & 214.86 \\
+    ETD-ns & 35.62 & 1923.51 & 77.22 & \textbf{7140.12} & 142.78 & \textbf{210.48} \\
+    ETD-nls & 35.62 & 1923.51 & 77.22 & \textbf{7140.12} & 142.78 & \textbf{210.48} \\
+    ETD-nl & 41.01 & 2496.94 & 80.59 & 7808.99 & 153.47 & 214.86
+\end{tabular}
+
+\subsection{Interfloor}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 37.78 & 2525.90 & 96.09 & 11851.98 & 282.35 & 338.44 \\
+    ETA-ns & 38.07 & 2261.63 & 96.85 & 11779.98 & 229.54 & 331.26 \\
+    ETA-nls & \textbf{37.24} & \textbf{2120.92} & 96.05 & \textbf{11471.77} & \textbf{208.13} & \textbf{295.70} \\
+    ETA-nl & 37.39 & 2390.69 & \textbf{95.26} & 11525.85 & 261.75 & 314.50 \\
+    ETD-n & 62.64 & 6128.04 & 100.76 & 13012.39 & 249.29 & 302.11 \\
+    ETD-ns & 56.76 & 5097.82 & 96.79 & 11860.48 & 233.16 & 297.42 \\
+    ETD-nls & 56.76 & 5097.82 & 96.79 & 11860.48 & 233.16 & 297.42 \\
+    ETD-nl & 62.64 & 6128.04 & 100.76 & 13012.39 & 249.29 & 302.11
+\end{tabular}
+
+\subsection{Lunchtime}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 25.58 & 1335.56 & 82.08 & 8614.69 & 252.45 & 335.45 \\
+    ETA-ns & 25.75 & 1282.41 & 81.93 & 8520.67 & 274.61 & 348.46 \\
+    ETA-nls & 23.85 & \textbf{956.43} & 81.16 & 8192.95 & \textbf{132.93} & 243.23 \\
+    ETA-nl & \textbf{23.65} & 1005.81 & \textbf{79.25} & 7898.02 & 164.99 & 273.90 \\
+    ETD-n & 41.51 & 2759.09 & 80.83 & 7939.70 & 181.85 & \textbf{230.46} \\
+    ETD-ns & 38.44 & 2391.90 & 79.81 & \textbf{7662.90} & 192.55 & 241.47 \\
+    ETD-nls & 38.44 & 2391.90 & 79.81 & \textbf{7662.90} & 192.55 & 241.47 \\
+    ETD-nl & 41.51 & 2759.09 & 80.83 & 7939.70 & 181.85 & \textbf{230.46}
+\end{tabular}
+
+\section{8 Shafts}
+
+\subsection{Up-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 22.75 & 2190.56 & 90.56 & 11372.37 & 227.99 & 349.66 \\
+    ETA-ns & 20.58 & 1724.58 & 87.99 & 10438.80 & 230.98 & 340.88 \\
+    ETA-nls & \textbf{14.59} & \textbf{368.77} & 83.58 & 8707.91 & 84.32 & 223.54 \\
+    ETA-nl & 14.62 & 371.71 & 83.45 & 8715.15 & \textbf{69.05} & 242.14 \\
+    ETD-n & 28.22 & 1325.81 & 70.88 & 6029.90 & 150.96 & 195.48 \\
+    ETD-ns & 27.25 & 1220.83 & \textbf{70.13} & \textbf{5725.30} & 128.87 & \textbf{183.06} \\
+    ETD-nls & 27.25 & 1220.83 & \textbf{70.13} & \textbf{5725.30} & 128.87 & \textbf{183.06} \\
+    ETD-nl & 28.22 & 1325.81 & 70.88 & 6029.90 & 150.96 & 195.48
+\end{tabular}
+
+\subsection{Down-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 21.52 & 693.01 & 67.85 & 5744.19 & 120.35 & 201.86 \\
+    ETA-ns & 21.44 & 695.48 & 68.24 & 5791.26 & 122.29 & 198.33 \\
+    ETA-nls & \textbf{21.29} & 666.29 & 67.19 & 5591.81 & 110.11 & 204.40 \\
+    ETA-nl & 21.35 & \textbf{665.78} & \textbf{67.15} & 5592.92 & \textbf{99.29} & 192.32 \\
+    ETD-n & 33.36 & 1651.48 & 69.31 & 5749.98 & 128.07 & \textbf{173.70} \\
+    ETD-ns & 29.93 & 1323.91 & 67.38 & \textbf{5372.65} & 126.10 & 176.94 \\
+    ETD-nls & 29.93 & 1323.91 & 67.38 & \textbf{5372.65} & 126.10 & 176.94 \\
+    ETD-nl & 33.36 & 1651.48 & 69.31 & 5749.98 & 128.07 & \textbf{173.70}
+\end{tabular}
+
+\subsection{Interfloor}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & \textbf{27.68} & 1236.25 & \textbf{76.41} & \textbf{7425.67} & 208.14 & 255.23 \\
+    ETA-ns & 29.10 & 1275.83 & 79.05 & 7826.99 & 163.34 & 260.97 \\
+    ETA-nls & 28.17 & \textbf{1177.27} & 77.92 & 7603.56 & \textbf{151.47} & \textbf{250.56} \\
+    ETA-nl & 28.32 & 1315.57 & 77.20 & 7595.35 & 191.64 & 281.75 \\
+    ETD-n & 47.67 & 3502.74 & 80.96 & 8258.77 & 214.38 & 253.10 \\
+    ETD-ns & 44.34 & 3088.56 & 79.43 & 7898.68 & 197.74 & 264.31 \\
+    ETD-nls & 44.34 & 3088.56 & 79.43 & 7898.68 & 197.74 & 264.31 \\
+    ETD-nl & 47.67 & 3502.74 & 80.96 & 8258.77 & 214.38 & 253.10
+\end{tabular}
+
+\subsection{Lunchtime}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 19.54 & 798.72 & 68.66 & 6004.64 & 204.22 & 283.08 \\
+    ETA-ns & 18.67 & 641.86 & 67.60 & 5708.49 & 193.10 & 251.43 \\
+    ETA-nls & \textbf{17.93} & \textbf{529.75} & 67.91 & 5695.17 & \textbf{106.54} & 207.75 \\
+    ETA-nl & \textbf{17.93} & 580.92 & 67.18 & 5656.53 & 178.74 & 227.92 \\
+    ETD-n & 32.12 & 1656.07 & 68.02 & 5528.16 & 173.47 & 200.22 \\
+    ETD-ns & 29.62 & 1400.13 & \textbf{66.69} & \textbf{5233.05} & 150.85 & \textbf{193.19} \\
+    ETD-nls & 29.62 & 1400.13 & \textbf{66.69} & \textbf{5233.05} & 150.85 & \textbf{193.19} \\
+    ETD-nl & 32.12 & 1656.07 & 68.02 & 5528.16 & 173.47 & 200.22
+\end{tabular}
+
+\section{9 Shafts}
+
+\subsection{Up-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 21.67 & 2082.10 & 87.92 & 10749.25 & 218.86 & 344.25 \\
+    ETA-ns & 19.68 & 1764.03 & 85.87 & 10222.01 & 222.69 & 337.47 \\
+    ETA-nls & 12.64 & 275.70 & 80.87 & 8209.35 & 60.24 & 224.91 \\
+    ETA-nl & \textbf{12.60} & \textbf{273.53} & 81.97 & 8472.56 & \textbf{53.80} & 219.09 \\
+    ETD-n & 23.75 & 924.67 & 63.42 & 4756.51 & 112.94 & 170.20 \\
+    ETD-ns & 22.05 & 808.58 & \textbf{61.81} & \textbf{4407.05} & 111.30 & \textbf{154.89} \\
+    ETD-nls & 22.05 & 808.58 & \textbf{61.81} & \textbf{4407.05} & 111.30 & \textbf{154.89} \\
+    ETD-nl & 23.75 & 924.67 & 63.42 & 4756.51 & 112.94 & 170.20
+\end{tabular}
+
+\subsection{Down-peak}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & \textbf{19.09} & \textbf{535.03} & 62.05 & 4769.13 & 100.10 & 189.21 \\
+    ETA-ns & 19.42 & 548.37 & 61.97 & 4716.30 & 104.67 & 189.01 \\
+    ETA-nls & 19.49 & 551.37 & 62.33 & 4774.09 & \textbf{92.59} & 188.95 \\
+    ETA-nl & 19.18 & 539.43 & 62.28 & 4802.87 & 93.02 & 187.37 \\
+    ETD-n & 29.28 & 1248.60 & 63.02 & 4719.87 & 119.19 & 167.86 \\
+    ETD-ns & 26.41 & 1007.27 & \textbf{61.25} & \textbf{4419.16} & 107.37 & \textbf{153.42} \\
+    ETD-nls & 26.41 & 1007.27 & \textbf{61.25} & \textbf{4419.16} & 107.37 & \textbf{153.42} \\
+    ETD-nl & 29.28 & 1248.60 & 63.02 & 4719.87 & 119.19 & 167.86
+\end{tabular}
+
+\subsection{Interfloor}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 21.42 & 704.69 & \textbf{63.67} & \textbf{5115.43} & 149.78 & 223.56 \\
+    ETA-ns & 21.59 & \textbf{672.07} & 64.29 & 5151.61 & \textbf{96.96} & 227.57 \\
+    ETA-nls & 21.59 & \textbf{672.07} & 64.29 & 5151.61 & \textbf{96.96} & 227.57 \\
+    ETA-nl & \textbf{21.31} & 675.71 & 63.81 & 5116.93 & 136.40 & \textbf{212.26} \\
+    ETD-n & 37.02 & 2126.95 & 66.96 & 5570.30 & 183.62 & 249.78 \\
+    ETD-ns & 35.49 & 1884.59 & 66.50 & 5322.70 & 160.30 & 216.04 \\
+    ETD-nls & 35.49 & 1884.59 & 66.50 & 5322.70 & 160.30 & 216.04 \\
+    ETD-nl & 37.02 & 2126.95 & 66.96 & 5570.30 & 183.62 & 249.78
+\end{tabular}
+
+\subsection{Lunchtime}
+\begin{tabular}{l | r r r r r r}
+	& AWT & ASWT & AST & ASST & LWT & LST \\
+	\hline
+    ETA-n & 14.93 & 469.58 & 59.73 & 4532.66 & 184.35 & 246.04 \\
+    ETA-ns & 14.15 & 353.34 & 59.34 & 4367.95 & 116.53 & 224.67 \\
+    ETA-nls & \textbf{13.84} & \textbf{315.86} & 58.86 & 4259.37 & \textbf{76.18} & 198.82 \\
+    ETA-nl & \textbf{13.84} & 327.43 & 58.70 & 4280.85 & 93.73 & 201.77 \\
+    ETD-n & 25.65 & 1056.56 & 58.90 & 4095.59 & 140.39 & 169.24 \\
+    ETD-ns & 23.84 & 888.58 & \textbf{58.05} & \textbf{3918.17} & 120.21 & \textbf{156.97} \\
+    ETD-nls & 23.84 & 888.58 & \textbf{58.05} & \textbf{3918.17} & 120.21 & \textbf{156.97} \\
+    ETD-nl & 25.65 & 1056.56 & 58.90 & 4095.59 & 140.39 & 169.24
+\end{tabular}
+
 \end{appendices}
 
 \end{document}

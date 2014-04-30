@@ -12,6 +12,7 @@
 \usepackage{pgfplots}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage[titletoc]{appendix}
 \usepackage[colorinlistoftodos]{todonotes}
 
 \usetikzlibrary{arrows,automata}
@@ -33,13 +34,15 @@
 
 \begin{document}
 \renewcommand{\thepage}{\roman{page}}
-\maketitle 
+\maketitle
 
-\setcounter{page}{0}
-\part{Introduction}
-\renewcommand{\thepage}{\arabic{page}}
+\newpage
+\thispagestyle{empty}
+\mbox{}
 
 \chapter{Introduction}
+\setcounter{page}{1}
+\renewcommand{\thepage}{\arabic{page}}
 
 \section{Introduction}
 
@@ -60,8 +63,6 @@ The remainder of this report is structured in four parts.  An initial review of 
 \section{Statement of Ethics}
 
 This project does not raise any ethical concerns.  All experimentation is performed using a simulator and no human participation is involved.
-
-\part{Literature Review}
 
 \chapter{Literature Review}
 
@@ -279,8 +280,6 @@ ETD is very similar to ETA, with the difference is that it aims to minimise the 
 \subsubsection{Q-Learning \& Neural Networks \citep{Crites1998}}
 
 \citet{Crites1998} have taken a Q-Learning approach using neural networks.  The product of their investigations had some success in that they were able to slightly outperform FIM and ESA, but it required 60,000 hours of simulated learning time (almost 7 years), which is clearly an impractically long time for real-life use.
-
-\part{Elevator Simulator}
 
 \chapter{Core Elevator Simulator}
 \label{ceschapter}
@@ -1206,8 +1205,6 @@ After I had corrected this aspect of the code, I ran the simulation again and fo
 \subsection{Allocator Component}
 The only change to the Allocator component was for Allocators to handle call allocation failures from Cars.  This was implicitly tested during the Domain Model tests described above and performed correctly.  However, it is still necessary that each new Allocator that is implemented should be properly validated as discussed in the Core Elevator Simulator part.
 
-\part{Algorithms for TCOS Elevator Systems}
-
 \chapter{Discussion of Allocation Algorithms}
 \label{algdiscussion}
 
@@ -1588,8 +1585,6 @@ In up-peak traffic, ETA performed best in its most complex form (ETA-cls), while
 
 From these results we can see that conflict-sensitivity does not necessarily improve matters for ETA and ETD.  It seems that, based on these results, operators of TCOS elevator systems ought to choose between ETA and ETD depending on whether they prioritise waiting time or system time for their passengers.  MOA provides very good waiting time results for interfloor traffic, while remaining computationally less-expensive than ETA and ETD, which might make it appropriate for some installations.  If possible, it might be sensible for an operator to use MOA during interfloor traffic periods, switching as appropriate to ETA or ETD at other times.  These results do not recommend FZA as a good policy, though FZA-u is not disastrous under certain conditions.  FZA-u could be a consideration for certain customers who might wish to save cost by having one or more traditional shafts mixed with their TCOS shafts.
 
-\part{Conclusion}
-
 \chapter{Conclusion and Further Work}
 
 \section{Conclusion}
@@ -1629,7 +1624,7 @@ Finally, it would be interesting to explore the interaction between allocation a
 \bibliography{Resources}
 
 \appendix
-\part{Appendices}
+\begin{appendices}
 
 \chapter{Materials referred to in \autoref{ceschapter}}
 
@@ -2075,7 +2070,7 @@ This is the manually-produced trace table that was used to verify the behaviour 
 	13:04:52.71 &  &  &  &  &  &  &  &  & Stopping & Up & 9 & 9,9 & 0 &  &  & 0 \\
 	13:04:54.38 &  &  &  &  &  &  &  &  & Parked & Up & 9 & 9,9 & 0 &  &  & 0
 \end{longtable}
-
 \end{landscape}
+\end{appendices}
 
 \end{document}

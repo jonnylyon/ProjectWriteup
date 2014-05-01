@@ -29,7 +29,7 @@
 \wordcount{24,302 (draft)}
 \dedication{}
 \acknowledgements{I would like to thank my supervisor, Dr Alan Frisch, for his helpful and encouraging advice and guidance during the course of this project, as well as my family, housemates and friends for their ongoing support.}
-\abstract{Abstract not yet written}
+\abstract{The development of major cities relies on the ability to build tall buildings that remain effective as practical places of work and leisure.  One very prominent consideration is the transportation of people up and down the building.  As buildings are built taller and taller, the superlinear increase in area required for elevator shafts has provoked the development of several new technologies and systems for efficient vertical transportation using fewer shafts, but these bring with them their own problems of `scheduling' (deciding how the elevator cars should behave).  This report explores one such concept, Two-Cars-in-One-Shaft (TCOS), whereby two separate cars share the same vertical shaft, with one always remaining above the other.  It goes on to discuss and develop several possible algorithms for scheduling these elevators, using `destination control', whereby users declare their destination at the time of first registering a call rather than when boarding the car, giving the system more information with which to make decisions.  A simulation tool is developed, using which all of the algorithms are evaluated and compared.  Ultimately, it is demonstrated that TCOS systems using the algorithms developed in this report provide significant space savings over traditional systems with similar performance.}
 
 \def\rot{\rotatebox}
 \pgfplotsset{compat=1.10}
@@ -56,7 +56,7 @@ One such innovation, marketed as TWIN by Thyssenkrupp, is the concept of having 
 
 TCOS installations use Destination Control, a system in which passengers give their destination at the time of first registering a call for a lift, in contrast to traditional systems whereby they initially just state their intended direction of travel.  This allows the lift controller to make more reliable and efficient decisions about which car should be allocated to serve each call.
 
-In this project, scheduling methods are developed and evaluated for TCOS installations with Destination Control.  This involves the implementation of a simulator on which the performance of various algorithms is tested in relation to four of the main types of traffic typically experienced by large buildings as well as a number of popular performance criteria.  Different approaches are shown to be variously successful depending on the specific criteria of interest, and it is ultimately demonstrated that TCOS systems give significant improvements over traditional systems in the cases tested.
+In this project, scheduling methods are developed and evaluated for TCOS installations with Destination Control.  This involves the implementation of a simulator on which the performance of various algorithms is tested in relation to four of the main types of traffic typically experienced by large buildings as well as a number of popular performance criteria.  Different approaches are shown to be variously successful depending on the specific criterion of interest, and it is ultimately demonstrated that TCOS systems give significant improvements over traditional systems in the cases tested.
 
 \section{Outline of Report}
 
@@ -407,7 +407,7 @@ A third component is the agenda and main control loop.  The agenda contains two 
 
 The final notable component is the passenger distribution generator which, as per the requirements, generates passenger arrival schedules based on Poisson distributions as configured by the user.
 
-Other uninteresting components include the simulation configuration loader, which parses a simulation configuration file containing all parameters of the simulation run, and the logger which writes content into a log file and (optionally) prints them to the console at run time.  Configuration files use an XML format, which was chosen as it is widely understood by the Computer Science community, and because there are built-in libraries for handling XML files within C\#.
+Other uninteresting components include the simulation configuration loader, which parses a simulation configuration file containing all parameters of the simulation run, and the logger which writes content into a log file and (optionally) prints them to the console at run time.  Configuration files use an XML format, which was chosen as it is widely understood by the Computer Science community, and because there are built-in libraries for handling XML files within most programming languages.
 
 A significant decision had to be made about how different allocators could be written and used with the simulator.  One possibility was that allocation algorithms could be written separately and compiled to Dynamic Linked Libraries (DLL), which could then be dynamically pulled into the simulator at runtime, but this had the problem that the allocators would then not be able to have any memory of their own, which might be desirable for algorithms involving learning.  Another possibility was to do it the other way around -- to have the allocator pull the simulation logic in as a DLL -- but then the memory of the domain model would have to be passed around via the allocator all the time, breaking some of the cohesion and making the domain logic slightly harder.  After discussion with Alan Frisch, it was decided that, for the time being, the different allocators would simply be built into the same executable as the rest of the simulator and, should another allocator be added, the system would need to be recompiled.
 
@@ -596,6 +596,10 @@ The behaviour of cars is governed precisely by the following three rules:
 		\captionof{figure}{The discretised state space of the same upward-moving elevator car.}
 		\label{shaftstates}
 	\end{minipage}
+	\begin{tabularx}{\linewidth}{l X l}
+	 & & \\
+	 & Diagrams demonstrating the relationship between the continuous state space of a real upward-moving elevator car (\autoref{shaftbranching}) and the discrete model used in the simulation tool (\autoref{shaftstates}).  In both diagrams, green lines represent acceleration, brown lines represent deceleration, and blue lines represent constant movement at the maximum speed.  Red dots represent the points at which the car must make decisions about whether or not to stop. & 
+	\end{tabularx}
 \end{figure}
 
 Since the decision was made to use a discrete event-based simulation, it was necessary to consider how the movement of the cars, which is inherently continuous, could be represented meaningfully in a discrete manner.  While developing a dynamic programming approach to elevator scheduling, \citet{Nikovski2003} present a discretised model of the state space of an elevator car in terms of its position in the shaft (see \autoref{LitRevESADP}), which has been adapted for use in this simulator.  If one considers the two parameters of the continuous state space to be current speed and vertical position in the shaft then, given that the car will have some pre-determined maximum speed and rates of acceleration and deceleration, it can be seen that the car will follow certain fixed paths around this state space.  These paths are shown for an upward-moving car in \autoref{shaftbranching}, where the red dots represent the `decision points' - the moments at which the car must decided whether or not to stop at a floor.  The green, brown and blue lines represent acceleration, deceleration and moving at a constant speed respectively.
@@ -806,7 +810,7 @@ The purpose of the Passenger Distribution generator is to load an XML `specifica
 
 This example specification is for up-peak traffic between three floors.  The first <ArrivalFloor> element specifies the mean number of arrivals per minute at floor 0 as 5 groups going to floor 1, and 3 groups going to floor 2.  Similarly, the mean is 0.5 groups per minute going from floor 1 to 0, and 1 group per minute going from 1 to 2.  0.3 groups per minute go from floor 2 to 0, while 0.5 groups per minute go from 2 to 1.  You will also see that the sizes of groups boarding at floor 0 are generally larger, with an average of 2 people as opposed to an average of 1 person per group for other movements.
 
-The passenger distribution generator was run with the above specification file, and configured to create a schedule for a period of 10 minutes, from 13:00:00 to 13:10:00.  An extract from the file is shown here, but the full schedule is available in the appendix.
+The passenger distribution generator was run with the above specification file, and configured to create a schedule for a period of 10 minutes, from 13:00:00 to 13:10:00.  An extract from the file is shown here, but the full schedule is available in \autoref{cesappendix}.
 
 \begin{lstlisting}
 <PassengerGroups>
@@ -852,10 +856,10 @@ function PoissonDistributedRandomNumber(mean):
 	return k - 1
 \end{lstlisting}
 
-When generating the schedule, we progress through time in steps specified by the user (in this example we will use 1 second time slices).  At each time step, we calculate the mean number of passenger groups for each movement in that time step (for a 1 second step, we divide the mean per minute by 60), and then use Knuth's algorithm to determine, based on that mean, how many arrivals we will have for each movement.  Then, for each arrival that we generate, we run Knuth's algorithm based on the mean group size for that movement to determine the size of the group.  The user specifies a maximum group size; if the size of a group is not between 1 and the user-specified maximum, we generate another value using Knuth's algorithm.
+When generating the schedule, we progress through time in steps specified by the user (in this example we will use 1 second time steps).  At each time step, we calculate the mean number of passenger groups for each movement in that time step (for a 1 second step, we divide the mean per minute by 60), and then use Knuth's algorithm to determine, based on that mean, how many arrivals we will have for each movement.  Then, for each arrival that we generate, we run Knuth's algorithm based on the mean group size for that movement to determine the size of the group.  The user specifies a maximum group size; if the size of a group is not between 1 and the user-specified maximum, we generate another value using Knuth's algorithm.
 
 \subsection{Simulation Configuration}
-All parameters of a simulation run are specified in a single configuration file, so that this configuration can be easily stored and re-run at a later date if desired.  A sample configuration file is shown in the appendix, but it includes the following parameters:
+All parameters of a simulation run are specified in a single configuration file, so that this configuration can be easily stored and re-run at a later date if desired.  A sample configuration file is shown in \autoref{cesappendix}, but it includes the following parameters:
 \begin{itemize}
 	\item \textbf{Allocator} -- the name of the allocator that is to be used
 	\item \textbf{Passenger Distribution parameters}
@@ -988,7 +992,7 @@ The architecture of the Core Elevator Simulator allows each component to be vali
 
 The most significant component to validate is the Domain Model component.  In order to test it I designed a specific passenger arrival schedule, containing a total of 13 groups and 39 passengers arriving over the course of 2\textonehalf minutes, that would result in each workflow within the Car domain logic being tested.  Bearing in mind the architecture of the simulator, a couple of simplifications were made, which will be briefly tested later:  Firstly, the test modelled a building with just 3 floors, since this was enough to give confidence about the performance over a larger number without increasing the complexity of the hand-calculations.  Secondly, since the cars do not interact with each other in the Core Elevator Simulator, I built a dummy allocator that would assign all calls to car 0, meaning that all calls would be handled by the same car.
 
-Using Microsoft Excel to maintain a trace table, I worked through the way in which the car should behave as the different calls came in, performing all of the movement calculations and other mathematics by hand.  I calculated that the simulation run with my designed passenger arrival schedule would take 4 minutes and 14 seconds, and noted down the specific boarding and alighting times of each Passenger Group.  I also had a record of every state change that would take place in the car during the simulation run, which is shown in the appendix.
+Using Microsoft Excel to maintain a trace table, I worked through the way in which the car should behave as the different calls came in, performing all of the movement calculations and other mathematics by hand.  I calculated that the simulation run with my designed passenger arrival schedule would take 4 minutes and 14 seconds, and noted down the specific boarding and alighting times of each Passenger Group.  I also had a record of every state change that would take place in the car during the simulation run, which is shown in \autoref{cesappendix}.
 
 The test run included two scenarios where the car could not serve the calls due to lack of capacity, and it handled this correctly.  It also included cases where hall calls came in as the doors were closing.  The expected behaviour was for the car to reopen the doors and serve the hall calls before leaving.
 
@@ -1079,13 +1083,13 @@ There are a number of assumptions made about the TCOS case in addition those mad
 		\item No car will stop between floors.
 	\end{enumerate}
 
-\section{High Level Design Decisions}
+\section{Changes to Conceptual Design}
 
-The TCOS case introduced some complications to the constraints, which mean that decisions had to be made about the control logic in the Domain Model component.  Various strategies were considered in order to avoid deadlock or collision between cars.
+The TCOS case introduced some complications to the constraints, which mean that decisions had to be made about the control logic in the Domain Model component.  I developed four strategies that could be used to avoid deadlock or collision between cars, which are described below.
 
-\subsection{Option 1: Dynamic `Zoning' Approach}
+\subsection{Option 1: Dynamic `Zoning' Approach (DZA)}
 
-This approach works by considering each car within a shaft to have an exclusive zone of floors transiently defined as the minimal set of consecutive floors containing (a) the current floor of the car, (b) the car's park floor, and (c) the locations of all calls currently assigned to the car.  When the Allocator attempts to assign a call to a car, the car must either accept or reject the call based on the following rules:
+The first of the approaches that I developed works by considering each car within a shaft to have an exclusive zone of floors transiently defined as the minimal set of consecutive floors containing (a) the current floor of the car, (b) the car's park floor, and (c) the locations of all calls currently assigned to the car.  When the Allocator attempts to assign a call to a car, the car must either accept or reject the call based on the following rules:
 	\begin{enumerate}
 		\item If both the origin and destination of the call are within the car's current zone, the call will be accepted.
 		\item Otherwise, if both the origin and destination lie within the range of floors that the car's current zone can be extended into without overlapping with the zone of another car in the same shaft, the call will be accepted and the car's current zone will be extended accordingly.
@@ -1096,15 +1100,15 @@ In this case, the park floors should be fixed as the highest floor (for the uppe
 
 This approach very effectively separates the cars and does so without ultimately limiting the range of floors that any car can serve (for example, with appropriate Allocator behaviour, the upper car could conceivably serve a call at the ground floor, if the lower car is parked at the garage floor).  However, it is inefficient in that it could restrict the allocation of calls that might actually be feasible.  For example, if the upper car is at floor 8, and the lower car is travelling down from floor 4 to floor 1, it might be reasonable to allocate a call at floor 3 to the upper car.  This approach would not allow the allocation.
 
-\subsection{Option 2: Conflict Resolution Approach}
+\subsection{Option 2: Conflict Resolution Approach (CRA)}
 
-This more complicated approach allows any call to be allocated to any car at any time, and then relies on the control logic to resolve conflicts between cars.  In general, there are two types of conflict: one where the cars are travelling in the same direction but the car in front is delaying the car behind and the other where the cars are both travelling towards each other.  The former of these is simple to resolve from a conceptual perspective – the one behind must wait for the other to move out of the way before proceeding.  The latter presents some issue as one car (a `slave') must reverse for some distance to allow the other one (the `master') to serve its calls.  Some method of determining which car would be given priority would be required in order to use this approach.
+My second, more complicated approach allows any call to be allocated to any car at any time, and then relies on the control logic to resolve conflicts between cars.  In general, there are two types of conflict: one where the cars are travelling in the same direction but the car in front is delaying the car behind and the other where the cars are both travelling towards each other.  The former of these is simple to resolve from a conceptual perspective -- the one behind must wait for the other to move out of the way before proceeding.  The latter presents some issue as one car (a `slave') must reverse for some distance to allow the other one (the `master') to serve its calls.  Some method of determining which car would be given priority would be required in order to use this approach.
 
-While this approach has the potential to solve the efficiency problem of option 1, it also has some problems of its own.  For example, the master-slave behaviour would result in some conflict with the passenger expectation constraints (i.e. that a car must not change direction if it currently has passengers on board).  Additionally, it means that some non-trivial logic which is conceptually part of the allocation process is fixed within the Domain Model component.
+While this approach has the potential to solve the efficiency problem of option 1, it also has some problems of its own.  For example, the master-slave behaviour would result in some conflict with the passenger expectation constraints (i.e. that a car must not change direction if it currently has passengers on board).  Additionally, it means that some non-trivial logic which is conceptually part of the scheduling process is fixed within the Domain Model component.
 
-\subsection{Option 3: Overlapping Dynamic Zoning Approach}
+\subsection{Option 3: Overlapping Dynamic Zoning Approach (OZA)}
 
-The third option is similar to option 1, but it allows the zones of the two cars to overlap as long as the zone of the upper car does not contain the current floor of the lower car and vice-versa.  In this case, the set of floors that are in the zones of both cars is known as the overlap zone.  Only one of the cars may enter the overlap zone at a time, and this permission is granted to whichever one gets there first.  For example, if the overlap zone is floors 4, 5 and 6, and the lower car attempts to visit floor 4 while the upper car is still at floor 8, the lower car will continue to floor 4 and subsequently floors 5 and 6.  In the meantime, the upper car will be held at floor 7.  When the lower car leaves floor 6 to return to floor 5 the overlap zone will now only contain floors 4 and 5, so the upper car will be allowed to proceed to floor 6, and so on.
+My third option is extended from option 1, in that it allows the zones of the two cars to overlap as long as the zone of the upper car does not contain the current floor of the lower car and vice-versa.  In this case, the set of floors that are in the zones of both cars is known as the overlap zone.  Only one of the cars may enter the overlap zone at a time, and this permission is granted to whichever one gets there first.  For example, if the overlap zone is floors 4, 5 and 6, and the lower car attempts to visit floor 4 while the upper car is still at floor 8, the lower car will continue to floor 4 and subsequently floors 5 and 6.  In the meantime, the upper car will be held at floor 7.  When the lower car leaves floor 6 to return to floor 5 the overlap zone will now only contain floors 4 and 5, so the upper car will be allowed to proceed to floor 6, and so on.
 
 The following rules would be used to decide whether or not to accept a hall call:
 \begin{enumerate}
@@ -1120,10 +1124,10 @@ As with option 1, the park floors for the upper and lower cars should be the hig
 
 Option 3 is more efficient than option 1 in that it allows some feasible call allocations that option 1 does not allow.  However, it manages to extend the possibilities without contravening the passenger expectation constraints or the conceptual logic architecture of the simulator.
 
-\subsection{Option 4: Extended Overlapping Dynamic Zoning Approach}
+\subsection{Option 4: Extended Overlapping Dynamic Zoning Approach (EOZA)}
 \label{tesoption4}
 
-The fourth option considers that a car's zone is the minimal set of floors that contains (a) the current floor of the car, (b) the car's park floor, and (c) all floors that the car will visit before its next reversal.  This is different from the zones defined in options 3 and 4 as it only includes the calls in P1 and, if it is beyond the furthest location of all P1 calls, the first call in P2.
+The final approach, which is further extended from option 3, considers that a car's zone is the minimal set of floors that contains (a) the current floor of the car, (b) the car's park floor, and (c) all floors that the car will visit before its next reversal.  This is different from the zones defined in options 1 and 3 as it only includes the calls in P1 and, if it lies beyond the furthest location of all P1 calls, the first call in P2.
 
 This option extends option 3 to allow one car's zone to `absorb' the current floor of the other car, provided that the other car's zone does not already include this car's current floor (i.e. this car is not inside the overlap zone).  The result of this absorption is that the other car is now inside the overlap zone, and thus this car must wait for the other car to leave before it can enter.
 
@@ -1144,7 +1148,7 @@ Again, the park floors for the upper and lower cars should be the highest floor 
 
 This option further builds on the benefits of options 1 and 3, without contravening either the passenger expectation constraints or the conceptual logic architecture of the simulator.  For this reason, I chose to use option 4 in the TCOS Elevator Simulator.
 
-\section{Detailed Description of Changes Made}
+\section{Implementation of Changes}
 
 In this section I will describe the changes that were necessary in order to extend the Core Elevator Simulator for the TCOS case.  The majority of the changes were to the Domain Model component, though minor changes were also necessary in the Allocator and Simulation Configuration components.
 
@@ -1182,7 +1186,7 @@ The second change was to add `TCOS' as an option for the car type, so that the u
 \subsection{Domain Model Component}
 As with the Core Elevator Simulator, the most significant validation required in the TCOS Elevator Simulator is in the Domain Model component.  Again, since each car only interacts with the other car in its shaft, it was appropriate to focus the testing on the behaviour of cars within a single shaft.  This time, I used a building consisting of 10 floors, numbered 0 to 9, as well as a garage floor below floor 0 (numbered -1) which could not be used by passengers.  The passenger arrival schedule contained 9 passenger groups, totalling 39 people, arriving over the course of 2\textonehalf minutes.  I built an allocator named TwoZonesAllocator which would allocate each hall call to either the upper or lower car depending on the origin and destination floors of the passenger group involved (if the average of the origin and destination was greater than or equal to 4.5 the allocator would first attempt to allocate it to the upper car, otherwise it would first attempt to allocate it to the lower car).  If the first allocation attempt failed, it would allocate it to the other car instead.
 
-Again, I used Microsoft Excel to maintain a trace table of the behaviour of both cars in the shaft, performing all calculations by hand.  I calculated that the full simulation run would take a total of 4 minutes and 54 seconds, and kept a record of the boarding and alighting times of each passenger group.  The full trace table, including every state change that took place, is shown in the appendix.
+Again, I used Microsoft Excel to maintain a trace table of the behaviour of both cars in the shaft, performing all calculations by hand.  I calculated that the full simulation run would take a total of 4 minutes and 54 seconds, and kept a record of the boarding and alighting times of each passenger group.  The full trace table, including every state change that took place, is shown in \autoref{tesappendix} along with the passenger arrival schedule used.
 
 The passenger arrival schedule was designed to invoke all of the code path scenarios available, specifically testing the following cases:
 	\begin{itemize}
@@ -1212,7 +1216,7 @@ The only change to the Allocator component was for Allocators to handle call all
 \chapter{Discussion of Allocation Algorithms}
 \label{algdiscussion}
 
-In this chapter, I will discuss a number of allocation algorithms that I have developed or adapted for use in the TCOS case.  In \autoref{algsimulation} and \autoref{algevaluation} I will describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
+In the absence of existing allocation algorithms for TCOS systems, I have developed some of my own and adapted others from the traditional case.  I have taken Estimated Time of Arrival (ETA) and Estimated Time to Destination (ETD) from the literature and applied them in their existing forms, as well as making extensions of my own to reflect the complexities of the TCOS case.  Further to this, I have developed two of my own approaches from scratch: Minimal Overlapping Allocation (MOA) and Fixed TCOS Zoning Allocation (FZA).  In this chapter I will present these algorithms in their various forms.  In \autoref{algsimulation} and \autoref{algevaluation} I will go on to describe the process of evaluating each of these algorithms on the TCOS Elevator Simulator, and discuss their performances.
 
 \section{Estimated Time of Arrival Allocation (ETA)}
 \label{algETAdescription}
@@ -1253,7 +1257,7 @@ Estimated waiting times can be calculated en masse by doing a rough simulation o
 \subsection{Conflict-sensitive ETA}
 \label{algETAconflict}
 
-An obvious flaw with the na\"{i}ve algorithm is that is does not account for the delay caused by two cars in the same shaft having conflicting movements.  In order to resolve this, I have designed a simple method of predicting the cost caused by conflicts.  Again, I have chosen this method so as to minimize the computational cost for the same reasons as discussed with the na\"{i}ve algorithm.  The general method is the same as described above, but the EWT must now take into account the behaviour of both cars, and their interactions, and the SDF must take into account the delay caused to passengers in the other car ($d$) as well as those in the allocation car ($c$).
+An obvious flaw with the na\"{i}ve algorithm is that is does not account for the delay caused by two cars in the same shaft having conflicting movements.  In order to resolve this, I have extended ETA to include a simple method of predicting the cost caused by conflicts.  Again, I have chosen this method so as to minimize the computational cost for the same reasons as discussed with the na\"{i}ve algorithm.  The general method is the same as described above, but the EWT must now take into account the behaviour of both cars, and their interactions, and the SDF must take into account the delay caused to passengers in the other car ($d$) as well as those in the allocation car ($c$).
 
 In order to calculate the estimated waiting times of all groups in $G(c)$ and $G(d)$ we firstly work out an overlap region which is the range of floors that both $c$ and $d$ must visit in order to serve their respective calls.  We perform separate rough simulations of the behaviour of $c$ and $d$ as described for the na\"{i}ve algorithm but we take note of the times at which the car enters the overlap region and when it turns around to leave the region again (at which point the region becomes available to the other car - see \autoref{tesoption4}).  If there is no overlap region (i.e. the calls in $G(c)$ and $G(d)$ relate to disjoint sets of floors) then no entries or reversals are recorded.  After completing the simulations we retrospectively analyse the times spent in the overlap region.  When two cars attempt to use the overlap region at the same time, it is assumed that the first car to arrive gets priority and that the second car must wait until the first has turned around before entering.  Therefore, the delay caused to the second car by waiting (easily calculated by taking the second car's entry time from the first car's reversal time) is added to all of its subsequent times.  As with the na\"{i}ve algorithm, we must calculate these estimated waiting times both including and excluding the new hall call allocation in order to determine the SDF.
 
@@ -1261,7 +1265,7 @@ This method makes many assumptions about the behaviour of the cars, and in some 
 
 \subsection{Load-sensitive ETA}
 
-Another factor that can be considered in ETA allocation algorithms is the question of what happens if an allocation results in the capacity of the car being exceeded at some point.  As discussed previously, I have a simplification assumption that, should a passenger group be allocated to a car that cannot accommodate it when the car arrives, the passenger group will wait for the same car to go away and come back.  Since this is likely to come with great time costs for affected passenger groups, it is imperative that allocation algorithms do not result in over-allocation where possible.  I have therefore designed a variant of ETA whereby a high penalty cost is applied every time a passenger group cannot be accommodated by the car to which they have been allocated.  The penalty cost is a parameter that should be set equivalent to a very high number of seconds, so as to discourage these allocations.  It should be noted that an allocation might cause a later group not to be accommodated, even if the passenger group under allocation can be accommodated itself.  If an allocation results in two passenger groups being affected in this way, then the penalty cost will be applied twice, and so on for greater numbers.  The SDF is altered accordingly.  Assuming a high penalty cost value is chosen, this method has the effect of prioritising firstly the allocation that results in the fewest capacity-related problems, and resolving `ties' by minimising the original EWT costs described previously.
+Another factor that can be considered in ETA allocation algorithms is the question of what happens if an allocation results in the capacity of the car being exceeded at some point.  As discussed previously, I have a simplification assumption that, should a passenger group be allocated to a car that cannot accommodate it when the car arrives, the passenger group will wait for the same car to go away and come back.  Since this is likely to come with great time costs for affected passenger groups, it is imperative that allocation algorithms do not result in over-allocation where possible.  I have therefore designed a further variant of ETA whereby a high penalty cost is applied every time a passenger group cannot be accommodated by the car to which they have been allocated.  The penalty cost is a parameter that should be set equivalent to a very high number of seconds, so as to discourage these allocations.  It should be noted that an allocation might cause a later group not to be accommodated, even if the passenger group under allocation can be accommodated itself.  If an allocation results in two passenger groups being affected in this way, then the penalty cost will be applied twice, and so on for greater numbers.  The SDF is altered accordingly.  Assuming a high penalty cost value is chosen, this method has the effect of prioritising firstly the allocation that results in the fewest capacity-related problems, and resolving `ties' by minimising the original EWT costs described previously.
 
 \section{Estimated Time to Destination Allocation (ETD)}
 \label{algETDdescription}
@@ -1290,7 +1294,7 @@ Again, Load-sensitive ETD is analogous to Load-sensitive ETA, but note that the 
 
 \section{Minimal Overlapping Allocation (MOA)}
 
-I have developed this simple allocation policy which attempts to minimise the amount of time lost by one car having to wait for the other car.  It does this by attempting to minimise the sizes of the overlap regions (as described in \autoref{algETAconflict}) throughout the system.  In this algorithm, the cost of allocating to a car $c$ which shares a shaft with car $d$ is the size of the extension caused to the existing overlap region between $c$ and $d$ (if any).  That is:
+I have designed this simple allocation policy which attempts to minimise the amount of time lost by one car having to wait for the other car.  It does this by attempting to minimise the sizes of the overlap regions (as described in \autoref{algETAconflict}) throughout the system.  In this algorithm, the cost of allocating to a car $c$ which shares a shaft with car $d$ is the size of the extension caused to the existing overlap region between $c$ and $d$ (if any).  That is:
 
 \[ Cost(c, d, h) = Overlap(c, d, G(c) \cup \left\{ h \right\}, G(d)) - Overlap(c, d, G(c), G(d)) \]
 
@@ -1302,7 +1306,7 @@ Although this algorithm primarily minimises the sizes of overlap regions, the us
 
 \section{Fixed TCOS Zoning Allocation (FZA)}
 
-Again, I have developed this algorithm as an attempt to minimise the time wasted by cars within the same shaft having to wait for each other.  In fact, this algorithm eliminates conflicts altogether by setting split points for each shaft such that the lower car can only serve floors below the split point and the upper car can only serve floors above the split point.  This fairly obviously restricts the flexibility of the system, but with enough shafts and appropriately distributed split points it may turn out to be worth the computational simplification, at least for certain traffic profiles.  For a 10-floor system with 5 shafts it might be appropriate to set the split points as follows:
+Again, I have designed this algorithm as an attempt to minimise the time wasted by cars within the same shaft having to wait for each other.  In fact, this algorithm eliminates conflicts altogether by setting split points for each shaft such that the lower car can only serve floors below the split point and the upper car can only serve floors above the split point.  This fairly obviously restricts the flexibility of the system, but with enough shafts and appropriately distributed split points it may turn out to be worth the computational simplification, at least for certain traffic profiles.  For a 10-floor system with 5 shafts it might be appropriate to set the split points as follows:
 
 \begin{tabular}{l | l | l | l}
 	Shaft & Split point & Range of lower car & Range of upper car \\
@@ -1386,6 +1390,10 @@ As part of the Core Elevator Simulator, a Manual Allocator was included which do
 
 \chapter{Evaluation of Allocation Algorithms}
 \label{algevaluation}
+
+There are a number of questions that I would like to answer in evaluating the various allocation algorithms.  Firstly, is there one specific algorithm that gives the best performances outright across all scenarios?  If not, which kinds of algorithm appear to be virtuous for each type of traffic flow?  Do the computationally-simple algorithms, MOA and FZA, give performances that are competitive with the more complex ETA and ETD algorithms?  In the case of ETA and ETD, do my extensions (Conflict-sensitivity and Load-sensitivity) give improved results over the basic na\"{i}ve versions?  Is there any variant of FZA which provides reasonable performance in all traffic flow situations, such that cost could be saved by keeping one or more shafts as a traditional shaft?  Finally, do TCOS systems give improvements over traditional systems with the same number of shafts?  If so, how many additional shafts are required for a traditional system to match the performance of a TCOS system?
+
+In this chapter, I will present the scenario and methods used to evaluate each of the TCOS algorithms.  I will then present the results of the simulations and discuss their implications.  Finally, I will perform simulations of the same conditions using various numbers of traditional shafts, and present their results in comparison with the results of the TCOS simulations.
 
 \section{Simulation Scenario}
 
@@ -1588,7 +1596,7 @@ As expected, ETA generally gave better AWT and ASWT results than ETD, while ETD 
 
 In up-peak traffic, ETA performed best in its most complex form (ETA-cls), while ETD was best in its simplest form (ETA-n).  For down-peak traffic, the na\"{i}ve variants of both ETA and ETD (ETA-n, ETD-n) did better than the more complicated variants.  During interfloor traffic, ETA-cl and ETA-nl did better than the other ETA variants, suggesting that load-sensitivity was virtuous, while ETD did best as ETD-ns (na\"{i}ve squared form).  In lunchtime traffic, ETA benefitted again from load-sensitivity with ETA-nl coming out on top, while ETD-ns was again the best ETD variant.
 
-From these results we can see that conflict-sensitivity does not necessarily improve matters for ETA and ETD.  It seems that, based on these results, operators of TCOS elevator systems ought to choose between ETA and ETD depending on whether they prioritise waiting time or system time for their passengers.  MOA provides very good waiting time results for interfloor traffic, while remaining computationally less-expensive than ETA and ETD, which might make it appropriate for some installations.  If possible, it might be sensible for an operator to use MOA during interfloor traffic periods, switching as appropriate to ETA or ETD at other times.  These results do not recommend FZA as a good policy, though FZA-u is not disastrous under certain conditions.  FZA-u could be a consideration for certain customers who might wish to save cost by having one or more traditional shafts mixed with their TCOS shafts.
+From these results we can see that there is no one algorithm variant which performs best in every scenario.  However, ETA generally gives the best waiting times for every traffic flow type.  Conflict-sensitivity does not necessarily improve matters for ETA and ETD, though in some cases Load-sensitivity appears to be helpful.  It seems that, based on these results, operators of TCOS elevator systems ought to choose between ETA and ETD depending on whether they prioritise waiting time or system time for their passengers.  MOA provides very good waiting time results for interfloor traffic, while remaining computationally less expensive than ETA and ETD, which might make it appropriate for some installations.  If possible, it might be sensible for an operator to use MOA during interfloor traffic periods, switching as appropriate to ETA or ETD at other times.  These results do not recommend FZA as a good policy, though FZA-u is not disastrous under certain conditions.  FZA-u could be a consideration for certain operators who might wish to save cost by having one or more traditional shafts mixed with their TCOS shafts.
 
 \section{Comparison of Results with Performance of Traditional System}
 \label{tcosvssingle}
@@ -1606,7 +1614,7 @@ Having seen the relative performance of the algorithms when simulating TCOS syst
 	ETD-nls		& Na\"{i}ve Load-sensitive ETD optimising based on average squared times to destination.
 \end{tabularx}
 
-I decided to perform simulations to test the performance of traditional shafts in the same building and with the same passenger arrival schedules as tested for each of the TCOS algorithms.  In order to get a feel for how many traditional shafts would be required to match the scores obtained in the TCOS case, I performed the simulations firstly using six traditional shafts, then seven, eight and nine.  The full results of these simulations are shown in \autoref{tradresults}, but here I list the times of the best performing algorithm for each traffic type, evaluation criteria and number of shafts, alongside the best score obtained in the equivalent TCOS case (taken from \autoref{tcosresults}).  For each traffic flow type and evaluation criterion, the score in bold shows the fewest number of shafts that are required to match the performance of the TCOS algorithms.
+I decided to perform simulations to test the performance of traditional shafts in the same building and with the same passenger arrival schedules as tested for each of the TCOS algorithms.  In order to get a feel for how many traditional shafts would be required to match the scores obtained in the TCOS case, I performed the simulations firstly using six traditional shafts, then seven, eight and nine.  The full results of these simulations are shown in \autoref{tradresults}, but here I list the times of the best performing algorithm for each traffic type, evaluation criterion and number of shafts, alongside the best score obtained in the equivalent TCOS case (taken from \autoref{tcosresults}).  For each traffic flow type and evaluation criterion, the score in bold shows the fewest number of shafts that are required to match the performance of the TCOS algorithms.
 
 \subsection{Up-peak}
 \begin{tabular}{l | r r r r r r}
@@ -1615,9 +1623,9 @@ I decided to perform simulations to test the performance of traditional shafts i
     Best TCOS Score & 13.54 & 670.57 & 71.73 & 6364.71 & 145.91 & 199.61 \\
 	\hline
     Best 6-Car Traditional & 29.73 & 1463.01 & 95.51 & 10955.18 & 183.61 & 264.79 \\
-    Best 7-Car Traditional & 17.25 & \textbf{521.51} & 80.9 & 7755.7 & \textbf{137.17} & 207 \\
-    Best 8-Car Traditional & 14.59 & 368.77 & \textbf{70.13} & \textbf{5725.3} & 69.05 & \textbf{183.06} \\
-    Best 9-Car Traditional & \textbf{12.6} & 273.53 & 61.81 & 4407.05 & 53.8 & 154.89
+    Best 7-Car Traditional & 17.25 & \textbf{521.51} & 80.90 & 7755.70 & \textbf{137.17} & 207.00 \\
+    Best 8-Car Traditional & 14.59 & 368.77 & \textbf{70.13} & \textbf{5725.30} & 69.05 & \textbf{183.06} \\
+    Best 9-Car Traditional & \textbf{12.60} & 273.53 & 61.81 & 4407.05 & 53.80 & 154.89
 \end{tabular}
 
 \subsection{Down-peak}
@@ -1627,8 +1635,8 @@ I decided to perform simulations to test the performance of traditional shafts i
     Best TCOS Score & 25.37 & 1272.46 & 70.86 & 6484.97 & 154.78 & 213.49 \\
 	\hline
     Best 6-Car Traditional & 31.82 & 1605.03 & 90.83 & 10200.13 & 168.76 & 233.32 \\
-    Best 7-Car Traditional & \textbf{24.54} & \textbf{920.43} & 76.4 & 7140.12 & \textbf{121.3} & \textbf{210.48} \\
-    Best 8-Car Traditional & 21.29 & 665.78 & \textbf{67.15} & \textbf{5372.65} & 99.29 & 173.7 \\
+    Best 7-Car Traditional & \textbf{24.54} & \textbf{920.43} & 76.40 & 7140.12 & \textbf{121.30} & \textbf{210.48} \\
+    Best 8-Car Traditional & 21.29 & 665.78 & \textbf{67.15} & \textbf{5372.65} & 99.29 & 173.70 \\
     Best 9-Car Traditional & 19.09 & 535.03 & 61.25 & 4419.16 & 92.59 & 153.42
 \end{tabular}
 
@@ -1638,8 +1646,8 @@ I decided to perform simulations to test the performance of traditional shafts i
 	\hline
     Best TCOS Score & 31.26 & 1887.94 & 74.29 & 7094.14 & 204.13 & 254.29 \\
 	\hline
-    Best 6-Car Traditional & 50.62 & 4057.68 & 121.08 & 18445.6 & 278.98 & 365.36 \\
-    Best 7-Car Traditional & 37.24 & 2120.92 & 95.26 & 11471.77 & 208.13 & 295.7 \\
+    Best 6-Car Traditional & 50.62 & 4057.68 & 121.08 & 18445.60 & 278.98 & 365.36 \\
+    Best 7-Car Traditional & 37.24 & 2120.92 & 95.26 & 11471.77 & 208.13 & 295.70 \\
     Best 8-Car Traditional & \textbf{27.68} & \textbf{1177.27} & 76.41 & 7425.67 & \textbf{151.47} & \textbf{250.56} \\
     Best 9-Car Traditional & 21.31 & 672.07 & \textbf{63.67} & \textbf{5115.43} & 96.96 & 212.26
 \end{tabular}
@@ -1651,14 +1659,14 @@ I decided to perform simulations to test the performance of traditional shafts i
     Best TCOS Score & 24.48 & 1558.05 & 72.98 & 6715.45 & 171.76 & 222.04 \\
 	\hline
     Best 6-Car Traditional & 34.61 & 2024.18 & 98.66 & 11859.45 & 215.16 & 272.18 \\
-    Best 7-Car Traditional & \textbf{23.65} & \textbf{956.43} & 79.25 & 7662.9 & \textbf{132.93} & 230.46 \\
+    Best 7-Car Traditional & \textbf{23.65} & \textbf{956.43} & 79.25 & 7662.90 & \textbf{132.93} & 230.46 \\
     Best 8-Car Traditional & 17.93 & 529.75 & \textbf{66.69} & \textbf{5233.05} & 106.54 & \textbf{193.19} \\
     Best 9-Car Traditional & 13.84 & 315.86 & 58.05 & 3918.17 & 76.18 & 156.97
 \end{tabular}
 
 \subsection{Comments on Comparative Results}
 
-It can be seen from these results that, in \textit{every} traditional case tested, at least one additional shaft is required to match the performance of the 6-shaft TCOS system.  The number of additional shafts required depends on the traffic flow and the evaluation criteria used, but in the majority of cases 8 or more traditional shafts are required to match the performance of 6 TCOS shafts for the building and scenarios simulated.  In fact, regardless of which evaluation criterion is used, at least one of the traffic flows requires 8 shafts to match the performance.  A saving of 2 shafts may sound insignificant, considering that each TCOS shaft requires the installation of two cars which must come at a cost, but in a city the cost of land space is extremely significant.  Our simulations considered a building of 30 floors, and elevator cars with a capacity of 20 people.  A standard shaft for cars of approximately that capacity has an area of approximately 76 square feet \citep{StannahFactSheet}, which when counted over 30 floors takes up a total of 2280 square feet which could be used for other means.  The average renting price for office space in New York City is \$49.98 per square foot per year \citep{Patrick2013OfficeSpace}.  It follows, therefore, that a 30-storey building in New York could make a space saving worth almost \$114,000 per year for each shaft.  With this in mind, the potential benefit of installing 6 TCOS shafts instead of 8 traditional shafts can start to be appreciated.
+It can be seen from these results that, in \textit{every} traditional case tested, at least one additional shaft is required to match the performance of the 6-shaft TCOS system.  The number of additional shafts required depends on the traffic flow and the evaluation criterion used, but in the majority of cases 8 or more traditional shafts are required to match the performance of 6 TCOS shafts for the building and scenarios simulated.  In fact, regardless of which evaluation criterion is used, at least one of the traffic flows requires 8 traditional shafts to match the performance of 6 TCOS shafts.  A saving of 2 shafts may sound insignificant, considering that each TCOS shaft requires the installation of two cars which must come at a cost, but in a city the cost of land space is extremely significant.  Our simulations considered a building of 30 floors, and elevator cars with a capacity of 20 people.  A standard shaft for cars of approximately that capacity has an area of approximately 7.11 m\textsuperscript{2} \citep{StannahFactSheet}, which when counted over 30 floors takes up a total of 213.3 m\textsuperscript{2} which could be used for other means.  The average renting price for office space in New York City is \$537.70 per square metre per year (July 2013) \citep{Patrick2013OfficeSpace}.  It follows, therefore, that a 30-storey building in New York could make a space saving worth almost \$115,000 per year for each shaft.  With this in mind, the potential benefit of installing 6 TCOS shafts instead of 8 traditional shafts can start to be appreciated.  The results also show the potential effectiveness of converting traditional shafts into TCOS shafts in an existing building if capacity is saturated, without needing to construct additional shafts.
 
 \chapter{Conclusion and Further Work}
 
@@ -1670,13 +1678,15 @@ I have independently extended the Core Elevator Simulator, creating an expanded 
 
 After finishing the basic TCOS Elevator Simulator, I have moved on to developing allocation algorithms for the TCOS case.  In order to evaluate the performance of these algorithms, I have implemented them by adding further allocation code to the TCOS Elevator Simulator.  These implementations have been appropriately tested.
 
-Having implemented the algorithms in the simulator, I have evaluated their performance during simulations of realistic passenger scenarios.  The parameters of the simulation have been chosen with regard to consistency with simulations used in existing literature.  The algorithms are each evaluated agains four types of traffic profile -- up-peak, down-peak, interfloor and lunchtime -- representing some of the different kinds of scenario that are typically handled by elevator groups during the course of a day.
+Having implemented the algorithms in the simulator, I have evaluated their performance during simulations of realistic passenger scenarios.  The parameters of the simulation have been chosen with regard to consistency with simulations used in existing literature.  The algorithms are each evaluated against four types of traffic profile -- up-peak, down-peak, interfloor and lunchtime -- representing some of the different kinds of scenario that are typically handled by elevator groups during the course of a day.
 
-Results of these evaluations have been presented, with a number of different evaluation criteria included, and suggestions are made as to how TCOS elevator operators might best apply the different algorithms to their respective circumstances.
+Results of these evaluations have been presented, with a number of different evaluation criteria included, and suggestions are made as to how TCOS elevator operators might best apply the different algorithms to their respective circumstances.  It is found that the relative performance of the algorithms depends on the traffic flows under test and, unsurprisingly, that the best choice of algorithm depends on the evaluation criterion chosen.
+
+Further, the results of the TCOS algorithms are compared to results of analogous simulations using traditional systems (single car per shaft).  It is demonstrated that significant space and cost savings can be made by installing TCOS shafts in place of traditional ones, and suggested that conversion of traditional shafts to TCOS shafts has the potential to enhance the capacity of a system of elevators without requiring the construction of additional shafts.
 
 \section{Further Work}
 
-During the course of this project, a numerous further questions have arisen that could not be investigated in the limited time available.  Here are some suggestions of further work that could build upon my own, relating to the development of the simulation tool and to the development and investigation of algorithms.
+During the course of this project, numerous further questions have arisen that could not be investigated in the limited time available.  Here are some suggestions of further work that could build upon my own, relating to the development of the simulation tool and to the development and investigation of algorithms.
 
 \subsection{Simulation Tool}
 
@@ -1702,11 +1712,11 @@ Finally, it would be interesting to explore the interaction between allocation a
 \begin{appendices}
 
 \chapter{Materials referred to in \autoref{ceschapter}}
+\label{cesappendix}
 
 \section{XML Materials}
 
 \subsection{Sample Passenger Arrival Schedule file}
-
 \lstset{language=XML}
 \begin{lstlisting}
 <PassengerGroups>
@@ -1956,6 +1966,7 @@ This is the manually-produced trace table that was used to verify the behaviour 
 \end{longtable}
 
 \chapter{Materials referred to in \autoref{teschapter}}
+\label{tesappendix}
 
 \section{Validation Materials}
 

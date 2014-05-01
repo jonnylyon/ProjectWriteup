@@ -38,12 +38,12 @@
 \BOOKMARK [2][-]{subsection.4.2.1}{Specification of Requirements}{section.4.2}% 38
 \BOOKMARK [2][-]{subsection.4.2.2}{Justification of Requirements}{section.4.2}% 39
 \BOOKMARK [1][-]{section.4.3}{Domain Assumptions}{chapter.4}% 40
-\BOOKMARK [1][-]{section.4.4}{High Level Design Decisions}{chapter.4}% 41
-\BOOKMARK [2][-]{subsection.4.4.1}{Option 1: Dynamic `Zoning' Approach}{section.4.4}% 42
-\BOOKMARK [2][-]{subsection.4.4.2}{Option 2: Conflict Resolution Approach}{section.4.4}% 43
-\BOOKMARK [2][-]{subsection.4.4.3}{Option 3: Overlapping Dynamic Zoning Approach}{section.4.4}% 44
-\BOOKMARK [2][-]{subsection.4.4.4}{Option 4: Extended Overlapping Dynamic Zoning Approach}{section.4.4}% 45
-\BOOKMARK [1][-]{section.4.5}{Detailed Description of Changes Made}{chapter.4}% 46
+\BOOKMARK [1][-]{section.4.4}{Changes to Conceptual Design}{chapter.4}% 41
+\BOOKMARK [2][-]{subsection.4.4.1}{Option 1: Dynamic `Zoning' Approach \(DZA\)}{section.4.4}% 42
+\BOOKMARK [2][-]{subsection.4.4.2}{Option 2: Conflict Resolution Approach \(CRA\)}{section.4.4}% 43
+\BOOKMARK [2][-]{subsection.4.4.3}{Option 3: Overlapping Dynamic Zoning Approach \(OZA\)}{section.4.4}% 44
+\BOOKMARK [2][-]{subsection.4.4.4}{Option 4: Extended Overlapping Dynamic Zoning Approach \(EOZA\)}{section.4.4}% 45
+\BOOKMARK [1][-]{section.4.5}{Implementation of Changes}{chapter.4}% 46
 \BOOKMARK [2][-]{subsection.4.5.1}{Domain Model Component}{section.4.5}% 47
 \BOOKMARK [2][-]{subsection.4.5.2}{Allocator Component}{section.4.5}% 48
 \BOOKMARK [2][-]{subsection.4.5.3}{Simulation Configuration}{section.4.5}% 49

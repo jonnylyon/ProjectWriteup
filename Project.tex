@@ -380,14 +380,15 @@ In order to simplify the logic used in the implementation of the simulator, the 
 		\item Passengers will travel to the same destination as originally given; they will not change their minds.
 		\item Passenger Groups will not split up.
 		\item Passengers will board the first available car that is travelling in their destination and can accommodate them.  The exception to this is in Destination Control systems when they will only board the car to which they have been allocated, and only when it is travelling in their direction.
+		\item When a car arrives, the Passenger Groups wishing to board the car will do so strictly in the order in which they placed their calls.  The exception to this is when a Passenger Group is too large to be accommodated, in which case smaller groups from behind may `jump the queue'.
 		\item All cars in an elevator system can call at all floors between the minimum and maximum floor specified.
 		\item If the lowest floor is $l$ and the highest floor is $h$, then there are $(l-h)+1$ floors in total, represented by the integers in the range $[l, h]$.
 		\item All cars accelerate and decelerate constantly between 0 and their maximum speed.
 		\item Acceleration and deceleration rates and travel speeds are not affected by parameters such as location in the shaft, direction of travel or current load.
-		\item All passengers take the same amount of time to board and alight cars.  The time taken for n passengers to board or alight increases linearly with n.
+		\item All passengers take the same amount of time to board and alight cars.  The time taken for $n$ passengers to board or alight increases linearly with $n$.
 		\item The distance between consecutive floors is the same throughout the building.
 		\item Passengers will not attempt to travel from one floor to the same floor (origin and destination floors will not be equal).
-		\item Continuous allocation algorithms will only revoke previous call allocations when new calls come in (they will not generally monitor the state of the system except at times when they are invoked by new passengers making hall calls). \textbf{[Is this clear?]}
+		\item Continuous allocation algorithms will only revoke previous call allocations when new calls come in (they will not generally monitor the state of the system except at times when they are invoked by new passengers making hall calls).
 		\item In a Destination Control system, if a Passenger Group is assigned to a car which turns out not have enough capacity to accommodate the group when it arrives, the entire group will wait at the floor until the same car comes back again.  Allocators should not allocate passengers to cars which cannot accommodate them.
 		\item Passenger Groups will not contain more people than can be accommodated by the smallest car when it is otherwise empty.
 	\end{itemize}

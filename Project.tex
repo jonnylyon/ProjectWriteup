@@ -26,7 +26,7 @@
 %\date{6th May 2014}
 \supervisor{Dr Alan M Frisch}
 \BEng
-\wordcount{24,302 (draft)}
+\wordcount{26,013 (draft)}
 \dedication{}
 \acknowledgements{I would like to thank my supervisor, Dr Alan Frisch, for his helpful and encouraging advice and guidance during the course of this project, as well as my family, housemates and friends for their ongoing support.}
 \abstract{The development of major cities relies on the ability to build tall buildings that remain effective as practical places of work and leisure.  One very prominent consideration is the transportation of people up and down the building.  As buildings are built taller and taller, the superlinear increase in area required for elevator shafts has provoked the development of several new technologies and systems for efficient vertical transportation using fewer shafts, but these bring with them their own problems of `scheduling' (deciding how the elevator cars should behave).  This report explores one such concept, Two-Cars-in-One-Shaft (TCOS), whereby two separate cars share the same vertical shaft, with one always remaining above the other.  It goes on to discuss and develop several possible algorithms for scheduling these elevators, using `destination control', whereby users declare their destination at the time of first registering a call rather than when boarding the car, giving the system more information with which to make decisions.  A simulation tool is developed, using which all of the algorithms are evaluated and compared.  Ultimately, it is demonstrated that TCOS systems using the algorithms developed in this report provide significant space savings over traditional systems with similar performance.}
@@ -205,7 +205,7 @@ The steps used to generate solutions in the search space are presented here, tak
 
 Since each hall call can only be assigned to one car, if a car is allocated a hall call that has already been allocated to another car at an earlier step in the algorithm, the original car has that hall call removed from its assignments.
 
-The load function for FIM is the same as that for HUFF, but it has to take into account that some cars have multiple zones to visit.  \textit{Bao1994} do not explicitly specify how to determine the order in which zones are visited by the cars, but it is assumed (and seemingly sensible) that to avoid unnecessary changes of direction the cars visit upward zones in order from low to high in the building followed by downward zones in order from high to low.
+The load function for FIM is the same as that for HUFF, but it has to take into account that some cars have multiple zones to visit.  \citep{Bao1994} do not explicitly specify how to determine the order in which zones are visited by the cars, but it is assumed (and seemingly sensible) that to avoid unnecessary changes of direction the cars visit upward zones in order from low to high in the building followed by downward zones in order from high to low.
 
 \subsubsection{Empty the System Algorithm (ESA) \citep{Bao1994}}
 \label{LitRevESA}
@@ -1077,7 +1077,7 @@ Requirements 6 and 7 are included to ensure that the TCOS Elevator Simulator can
 
 There are a number of assumptions made about the TCOS case in addition those made for the Core Elevator Simulator.
 	\begin{enumerate}
-		\item The separation of cars within a shaft is controlled by ensuring that no two cars may occupy the same floor at the same time.
+		\item The separation of cars within a shaft is controlled by ensuring that no two cars may be at the same floor at the same time.
 		\item When a car is moving from one floor ($a$) to the next ($b$), it is considered to occupy both floors at the same time.  Therefore the other car may not start moving towards floor $a$ until the car has reached floor $b$.
 		\item No further separation is enforced between cars except as specified and implied by the assumptions above.
 		\item No car will stop between floors.
